@@ -1,5 +1,5 @@
 :root {
-    --unvisited: yellow;                             /* Store status colors as variables       */
+    --unvisited: #CCCCCC;                             /* Store status colors as variables       */
     --visited: green;                               /* so they can be easily manipulated      */
     --obstacle: black;
     --start: blue;
@@ -10,12 +10,11 @@
 .map-container {
     width: 1000px;
     height: 1000px;
-    margin: 50px;
-    outline: solid 10px yellow;
-    display: flex;                                  /* Why is centering a div so difficult?   */
-    justify-content: center;
-    align-items: center;
+    margin: 0px;
+    padding: 0;
+    outline: solid 1px black;
     background-color: midnightblue;
+    line-height: 0;
 }
 
 .vis-node {
@@ -23,6 +22,9 @@
     height: 100px;
     outline: solid 1px black;
     background-color: var(--unvisited);
+    display: inline-block;
+    position: top;
+    margin: 0;
 }
 
 .test {

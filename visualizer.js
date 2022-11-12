@@ -22,17 +22,17 @@ var visNode = /** @class */ (function () {
     visNode.prototype.setState = function (newState) {
         this.state = newState;
         if (newState === nodeState.Unvisited)
-            this.div.setAttribute('background-color', 'var(--unvisited)');
+            this.div.style.backgroundColor = 'var(--unvisited)';
         else if (newState === nodeState.Visited)
-            this.div.setAttribute('background-color', 'var(--visited)');
+            this.div.style.backgroundColor = 'var(--visited)';
         else if (newState === nodeState.Obstacle)
-            this.div.setAttribute('background-color', 'var(--obstacle)');
+            this.div.style.backgroundColor = 'var(--obstacle)';
         else if (newState === nodeState.Start)
-            this.div.setAttribute('background-color', 'var(--start)');
+            this.div.style.backgroundColor = 'var(--start)';
         else if (newState === nodeState.End)
-            this.div.setAttribute('background-color', 'var(--start)');
+            this.div.style.backgroundColor = 'var(--end)';
         else if (newState === nodeState.Path)
-            this.div.setAttribute('background-color', 'var(--path)');
+            this.div.style.backgroundColor = 'var(--path)';
     };
     return visNode;
 }());
@@ -40,6 +40,7 @@ var Visualizer = /** @class */ (function () {
     function Visualizer() {
         this.map = new Array(); // Create our map
         this.container = document.createElement('div');
+        document.body.appendChild(this.container);
         this.container.className = 'map-container';
         this.container.setAttribute('id', 'vis-container');
         for (var i = 0; i < visSize; i++) { // Use the constructor to create visSize
@@ -69,3 +70,5 @@ var Visualizer = /** @class */ (function () {
     return Visualizer;
 }());
 var visualizer = new Visualizer;
+visualizer.setNode(90, nodeState.Start);
+visualizer.setNode(9, nodeState.End);
