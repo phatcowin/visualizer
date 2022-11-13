@@ -10,13 +10,25 @@ var nodeState;
     nodeState[nodeState["Path"] = 5] = "Path";
 })(nodeState || (nodeState = {}));
 var visNode = /** @class */ (function () {
-    function visNode() {
+    function visNode(visNodeID) {
         this.state = nodeState.Unvisited;
         this.div = document.createElement('div');
-        this.div.className = "vis-node"; // Make them children of the container and assign 
-        var visContainer = document.getElementById('vis-container'); // the vis-node class to them
-        if (visContainer)
-            visContainer.appendChild(this.div);
+        this.div.setAttribute('visNodeID', visNodeID); //      Assign an ID
+        this.div.className = "vis-node"; //      Assign the vis-node class
+        var visContainer = document.getElementById('vis-container');
+        if (visContainer) //      Make sure the container exists
+            visContainer.appendChild(this.div); //      Place the div in the container
+        else
+            console.log("Error::visualizer.ts: visNode cannot be constructed without a visContainer");
+        // Make each visNode interactive
+        this.div.addEventListener("click", function (ev) {
+            var element = ev.target; // Use the visNodeID attribute to target nodes
+            var targetNode = parseInt(element.getAttribute('visNodeID'));
+            if (visualizer.getNode(targetNode) === nodeState.Unvisited)
+                visualizer.setNode(targetNode, nodeState.Obstacle);
+            else if (visualizer.getNode(targetNode) === nodeState.Obstacle)
+                visualizer.setNode(targetNode, nodeState.Unvisited);
+        });
     }
     visNode.prototype.getState = function () { return this.state; };
     visNode.prototype.setState = function (newState) {
@@ -44,7 +56,7 @@ var Visualizer = /** @class */ (function () {
         this.container.className = 'map-container';
         this.container.setAttribute('id', 'vis-container');
         for (var i = 0; i < visSize; i++) { // Use the constructor to create visSize
-            var newNode = new visNode; // many visNodes and push them to our map
+            var newNode = new visNode(i); // many visNodes and push them to our map
             this.map.push(newNode);
         }
     }
@@ -67,8 +79,28 @@ var Visualizer = /** @class */ (function () {
         this.map[targetNode].setState(value);
         // Future Dalton: log all states and sets for slider!
     };
+    Visualizer.prototype.getNode = function (targetNode) {
+        return this.map[targetNode].getState();
+    };
     return Visualizer;
 }());
-var visualizer = new Visualizer;
-visualizer.setNode(90, nodeState.Start);
-visualizer.setNode(9, nodeState.End);
+function generateTestMap() {
+    visualizer.reset();
+    visualizer.setNode(73, nodeState.Start);
+    visualizer.setNode(18, nodeState.End);
+    visualizer.setNode(23, nodeState.Obstacle);
+    visualizer.setNode(34, nodeState.Obstacle);
+    visualizer.setNode(44, nodeState.Obstacle);
+    visualizer.setNode(45, nodeState.Obstacle);
+    visualizer.setNode(55, nodeState.Obstacle);
+    visualizer.setNode(56, nodeState.Obstacle);
+    visualizer.setNode(58, nodeState.Obstacle);
+}
+function testAnimations() {
+    var targetNode = Math.floor(Math.random() * visSize);
+    var newState = Math.floor(Math.random() * 6);
+    visualizer.setNode(targetNode, newState);
+    setTimeout(testAnimations, 100);
+}
+var visualizer = new Visualizer; // Start the visualizer
+testAnimations();

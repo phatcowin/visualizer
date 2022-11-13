@@ -13,11 +13,25 @@ enum nodeState {                                            // Create an enum to
 class visNode {
     private state:nodeState = nodeState.Unvisited;         
     private div = document.createElement('div');
-    constructor() {                                         // Use the constructor to initialize our visNode 
-        this.div.className = "vis-node";                     // Make them children of the container and assign 
-        let visContainer = document.getElementById('vis-container'); // the vis-node class to them
-        if (visContainer) visContainer.appendChild(this.div);
-    }       
+    constructor(visNodeID) {                                // Initialize visNode: 
+        this.div.setAttribute('visNodeID', visNodeID);      //      Assign an ID
+        this.div.className = "vis-node";                    //      Assign the vis-node class
+        let visContainer = document.getElementById('vis-container'); 
+        if (visContainer)                                   //      Make sure the container exists
+            visContainer.appendChild(this.div);             //      Place the div in the container
+        else 
+            console.log("Error::visualizer.ts: visNode cannot be constructed without a visContainer");
+
+                                                            // Make each visNode interactive
+        this.div.addEventListener("click", (ev: MouseEvent) => {
+            let element = ev.target as HTMLElement;         // Use the visNodeID attribute to target nodes
+            let targetNode:number = parseInt(element.getAttribute('visNodeID')); 
+            if (visualizer.getNode(targetNode) === nodeState.Unvisited)
+                visualizer.setNode(targetNode, nodeState.Obstacle);
+            else if (visualizer.getNode(targetNode) === nodeState.Obstacle)
+                visualizer.setNode(targetNode, nodeState.Unvisited);
+        });
+    }
     public getState() { return this.state; }
     public setState(newState:nodeState) {                  // When we set the node state, update the div color
         this.state = newState;
@@ -44,7 +58,7 @@ class Visualizer {
         this.container.className = 'map-container';
         this.container.setAttribute('id', 'vis-container');
         for (let i = 0; i < visSize; i++) {                 // Use the constructor to create visSize
-            let newNode = new visNode;                      // many visNodes and push them to our map
+            let newNode = new visNode(i);                   // many visNodes and push them to our map
             this.map.push(newNode);
         }
     }
@@ -64,14 +78,35 @@ class Visualizer {
 
         // Future Dalton: reset step log!
     }
-    public setNode(targetNode, value:nodeState) {           // Set the status of a given node
+    public setNode(targetNode:number, value:nodeState) {    // Set the status of a given node
         this.map[targetNode].setState(value);
 
         // Future Dalton: log all states and sets for slider!
     }
+    public getNode(targetNode:number) {
+        return this.map[targetNode].getState();
+    }
 }
 
-let visualizer = new Visualizer;
+function generateTestMap() {
+    visualizer.reset();
+    visualizer.setNode(73, nodeState.Start);
+    visualizer.setNode(18, nodeState.End);
+    visualizer.setNode(23, nodeState.Obstacle);
+    visualizer.setNode(34, nodeState.Obstacle);
+    visualizer.setNode(44, nodeState.Obstacle);
+    visualizer.setNode(45, nodeState.Obstacle);
+    visualizer.setNode(55, nodeState.Obstacle);
+    visualizer.setNode(56, nodeState.Obstacle);
+    visualizer.setNode(58, nodeState.Obstacle);
+}
 
-visualizer.setNode(90, nodeState.Start);
-visualizer.setNode(9, nodeState.End);
+function testAnimations() {
+    let targetNode = Math.floor(Math.random() * visSize);
+    let newState = Math.floor(Math.random() * 6);
+    visualizer.setNode(targetNode, newState);
+    setTimeout(testAnimations, 100);
+}
+
+let visualizer = new Visualizer;                            // Start the visualizer
+testAnimations();
