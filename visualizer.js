@@ -32,7 +32,6 @@ var visNode = /** @class */ (function () {
             visContainer.appendChild(this.div); //      Place the div in the container
         else
             console.log("Error::visualizer.ts: visNode cannot be constructed without a visContainer");
-        this.div.style.transition = "background-color: 1.5s";
         // Make each visNode interactive
         this.div.addEventListener("click", function (ev) {
             var element = ev.target; // Use the visNodeID attribute to target nodes
@@ -189,12 +188,13 @@ var Visualizer = /** @class */ (function () {
     };
     Visualizer.prototype.run = function () {
         var _this = this;
-        this.isRunning = false;
+        this.isRunning = true;
         if (this.mode === visMode.Auto) {
-            this.generate10xTest();
+            this.generateRandomTest();
+            dijkstra(this.map, this.startNode, this.endNode);
             setTimeout(function () {
                 _this.run();
-            }, 500);
+            }, 10000);
         }
         else if (this.mode === visMode.Dijkstra) {
             this.generateRandomTest();
@@ -218,25 +218,11 @@ var Visualizer = /** @class */ (function () {
     };
     return Visualizer;
 }());
-function generateRandomMap() {
-    visualizer.reset();
-    var startNode = Math.floor(Math.random() * visSize);
-    var endNode = Math.floor(Math.random() * visSize);
-    var obstacle = Math.floor(Math.random() * visSize);
-    while (startNode === endNode)
-        endNode = Math.floor(Math.random() * visSize);
-    visualizer.place(nodeState.Start);
-    visualizer.toggle(startNode);
-    visualizer.place(nodeState.End);
-    visualizer.toggle(endNode);
-    visualizer.place(nodeState.Obstacle);
-    for (var i = 0; i < 2 * rowSize; i++) {
-        visualizer.toggle(obstacle);
-        obstacle = Math.floor(Math.random() * visSize);
-    }
-}
 var visualizer = new Visualizer; // Start the visualizer
 visualizer.run();
+setTimeout(function () {
+    window.location.reload();
+}, 6500);
 // Pathfinding Algorithms and Components: 
 function dijkstra(map, startNode, endNode) {
     var unvisitedNodes = new Array;
@@ -329,4 +315,5 @@ function drawPath(startNode, endNode, map) {
         var node = path_1[_i];
         _loop_2(node);
     }
+    visualizer.stop();
 }

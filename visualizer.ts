@@ -195,12 +195,13 @@ class Visualizer {
         this.mode = newMode;
     }
     public run() {                                          // Start pathfinding with the specified mode
-        this.isRunning = false;
+        this.isRunning = true;
         if (this.mode === visMode.Auto) {
-            this.generate10xTest();
+            this.generateRandomTest();
+            dijkstra(this.map, this.startNode, this.endNode);
             setTimeout(() => {
                 this.run();
-            }, 500);
+            }, 10000);
         }
 
         else if (this.mode === visMode.Dijkstra) {
@@ -225,25 +226,11 @@ class Visualizer {
     }
 }
 
-function generateRandomMap() {
-    visualizer.reset();
-    let startNode = Math.floor(Math.random() * visSize);
-    let endNode = Math.floor(Math.random() * visSize);
-    let obstacle = Math.floor(Math.random() * visSize);
-    while (startNode === endNode)
-        endNode = Math.floor(Math.random() * visSize);
-    visualizer.place(nodeState.Start);
-    visualizer.toggle(startNode);
-    visualizer.place(nodeState.End);
-    visualizer.toggle(endNode);
-    visualizer.place(nodeState.Obstacle);
-    for (let i = 0; i < 2*rowSize; i++) {
-        visualizer.toggle(obstacle);
-        obstacle = Math.floor(Math.random() * visSize);
-    }
-}
 let visualizer = new Visualizer;                            // Start the visualizer
 visualizer.run();
+setTimeout(() => {
+    window.location.reload();
+}, 6500);
 
 
 // Pathfinding Algorithms and Components: 
@@ -333,4 +320,5 @@ function drawPath(startNode:number, endNode:number, map:Array<visNode>) {
             map[node].setState(nodeState.Path);
         }, loopCount*10);
     }
+    visualizer.stop();
 }
