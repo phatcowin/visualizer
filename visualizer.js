@@ -1,5 +1,5 @@
 // Visualizer Components and Properties:
-var rowSize = 50; // Adjust the map size with rowSize
+var rowSize = 100; // Adjust the map size with rowSize
 var visSize = rowSize * rowSize; // Map size = rowSize^2
 var nodeState;
 (function (nodeState) {
