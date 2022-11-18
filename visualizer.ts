@@ -147,7 +147,7 @@ class Visualizer {
     private generateRandomTest() {
         this.reset();
         let start = Math.floor(Math.random() * visSize);
-        let end = visSize - Math.floor(Math.random() * visSize);
+        let end = Math.floor(Math.random() * visSize);
         for (let i = 0; i < visSize/2.5; i++)
             this.setNode(Math.floor(Math.random() * visSize), nodeState.Obstacle);
         this.setNode(start, nodeState.Start);
@@ -254,8 +254,6 @@ function dijkstra(map:Array<visNode>, startNode:number, endNode:number) {
                 map[closestNode].setState(nodeState.Visited);                // Mark node visited
             }, loopCount*1);
         if (closestNode === endNode) {
-            console.log("Reached end node. " + endNode + " " + closestNode);
-            console.log("Dijkstra complete: drawing path from " + endNode);
             setTimeout(() => {
                 drawPath(startNode, endNode, map);
             }, loopCount*1 + 100);
