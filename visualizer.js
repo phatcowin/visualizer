@@ -315,12 +315,17 @@ function drawPath(startNode, endNode, map) {
         console.log("unshifting " + currentNode);
         path.unshift(currentNode);
         currentNode = map[currentNode].getPreviousNode();
-        loopCount++;
     }
-    for (var _i = 0, path_1 = path; _i < path_1.length; _i++) {
-        var node = path_1[_i];
+    var _loop_2 = function (node) {
+        loopCount++;
         if (map[node].getState() !== nodeState.Start
             && map[node].getState() !== nodeState.End)
-            map[node].setState(nodeState.Path);
+            setTimeout(function () {
+                map[node].setState(nodeState.Path);
+            }, loopCount * 10);
+    };
+    for (var _i = 0, path_1 = path; _i < path_1.length; _i++) {
+        var node = path_1[_i];
+        _loop_2(node);
     }
 }

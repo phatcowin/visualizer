@@ -324,11 +324,13 @@ function drawPath(startNode:number, endNode:number, map:Array<visNode>) {
         console.log("unshifting " + currentNode);
         path.unshift(currentNode);
         currentNode = map[currentNode].getPreviousNode();
-        loopCount++;
     }
     for (const node of path) {
+        loopCount++;
         if (map[node].getState() !== nodeState.Start
             && map[node].getState() !== nodeState.End)
-        map[node].setState(nodeState.Path);
+        setTimeout(() => {
+            map[node].setState(nodeState.Path);
+        }, loopCount*10);
     }
 }
