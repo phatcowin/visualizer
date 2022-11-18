@@ -1,5 +1,5 @@
 // Visualizer Components and Properties:
-var rowSize = 100; // Adjust the map size with rowSize
+var rowSize = 50; // Adjust the map size with rowSize
 var visSize = rowSize * rowSize; // Map size = rowSize^2
 var nodeState;
 (function (nodeState) {
@@ -32,6 +32,7 @@ var visNode = /** @class */ (function () {
             visContainer.appendChild(this.div); //      Place the div in the container
         else
             console.log("Error::visualizer.ts: visNode cannot be constructed without a visContainer");
+        this.div.style.transition = "background-color: 1.5s";
         // Make each visNode interactive
         this.div.addEventListener("click", function (ev) {
             var element = ev.target; // Use the visNodeID attribute to target nodes

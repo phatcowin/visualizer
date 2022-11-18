@@ -1,6 +1,6 @@
 // Visualizer Components and Properties:
 
-let rowSize = 100;                                         // Adjust the map size with rowSize
+let rowSize = 50;                                         // Adjust the map size with rowSize
 let visSize = rowSize * rowSize;                          // Map size = rowSize^2
 
 enum nodeState {                                            // Create an enum to reference our node states
