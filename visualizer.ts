@@ -1,5 +1,7 @@
-const rowSize = 10;                                         // Adjust the map size with rowSize
-const visSize = rowSize * rowSize;                          // Map size = rowSize^2
+// Visualizer Components and Properties:
+
+let rowSize = 100;                                         // Adjust the map size with rowSize
+let visSize = rowSize * rowSize;                          // Map size = rowSize^2
 
 enum nodeState {                                            // Create an enum to reference our node states
     Unvisited,
@@ -10,14 +12,25 @@ enum nodeState {                                            // Create an enum to
     Path,
 }
 
+enum visMode {
+    None,
+    Auto,
+    Dijkstra,
+}
+
 class visNode {
     private state:nodeState = nodeState.Unvisited;         
     private div = document.createElement('div');
+    private distance:number = Infinity;
+    private previousNode:number = null;
+    private nodeID:number = null;
     constructor(visNodeID) {                                // Initialize visNode: 
-        this.div.setAttribute('visNodeID', visNodeID);      //      Assign an ID
-        this.div.className = "vis-node";                    //      Assign the vis-node class
+        this.nodeID = visNodeID;                            //      Assign a nodeID to the class
+        this.div.setAttribute('visNodeID', visNodeID);      //      Assign an ID to the div
+        this.div.className = "vis-node";                    //      Assign the vis-node class to the div
+        //this.div.innerHTML = visNodeID;
         let visContainer = document.getElementById('vis-container'); 
-        if (visContainer)                                   //      Make sure the container exists
+        if (visContainer)                                   //      Make sure the container exists for the div
             visContainer.appendChild(this.div);             //      Place the div in the container
         else 
             console.log("Error::visualizer.ts: visNode cannot be constructed without a visContainer");
@@ -26,10 +39,7 @@ class visNode {
         this.div.addEventListener("click", (ev: MouseEvent) => {
             let element = ev.target as HTMLElement;         // Use the visNodeID attribute to target nodes
             let targetNode:number = parseInt(element.getAttribute('visNodeID')); 
-            if (visualizer.getNode(targetNode) === nodeState.Unvisited)
-                visualizer.setNode(targetNode, nodeState.Obstacle);
-            else if (visualizer.getNode(targetNode) === nodeState.Obstacle)
-                visualizer.setNode(targetNode, nodeState.Unvisited);
+            visualizer.toggle(targetNode);
         });
     }
     public getState() { return this.state; }
@@ -48,22 +58,112 @@ class visNode {
         else if (newState === nodeState.Path)
             this.div.style.backgroundColor = 'var(--path)';
     }
+    public setDistance(newDist:number) {
+        this.distance = newDist;
+    }
+    public getDistance() {
+        return this.distance;
+    }
+    public setPreviousNode(newNode:number) {
+        this.previousNode = newNode;
+        this.div.setAttribute("previous-node", ""+newNode);
+    }
+    public getPreviousNode() {
+        return this.previousNode;
+    }
+    public getNodeNumber() {
+        return this.nodeID;
+    }
 }
 
 class Visualizer {
     private map = new Array<visNode>();                     // Create our map
-    private container = document.createElement('div');
+    private div = document.createElement('div');            // Create a container for our visualizer
+    private startNode:number = -1;                          // Keep track of our start and end nodes
+    private endNode:number = -1;
+    private mode:visMode = visMode.Dijkstra;                    // Run mode (Dijkstra's, Auto, etc)
+    private isRunning:boolean = false;                      // Run switch
+    private inputMode:nodeState = nodeState.Obstacle;       // When a user clicks, what are they trying to place?
+
     constructor() {
-        document.body.appendChild(this.container);
-        this.container.className = 'map-container';
-        this.container.setAttribute('id', 'vis-container');
+        document.body.appendChild(this.div);
+        this.div.className = 'map-container';
+        this.div.setAttribute('id', 'vis-container');
         for (let i = 0; i < visSize; i++) {                 // Use the constructor to create visSize
             let newNode = new visNode(i);                   // many visNodes and push them to our map
             this.map.push(newNode);
         }
     }
-    public clear() {                                        // Reset any visited/path nodes, step log.
-        for (let i = 0; i < visSize; i++) {                 // Use between different runs on the same map.
+    private setNode(targetNode:number, value:nodeState) {   // Set the status of a given node
+        if (value === nodeState.Start) {                    // Only allow one start node
+            if (this.startNode !== -1) {
+                this.map[this.startNode].setState(nodeState.Unvisited);
+                this.map[this.startNode].setDistance(Infinity);
+            }
+            this.startNode = targetNode;
+            this.map[targetNode].setDistance(0);
+        }
+        else if (value === nodeState.End) {                 // Only allow one end node
+            if (this.endNode !== -1)
+                this.map[this.endNode].setState(nodeState.Unvisited);
+            this.endNode = targetNode;
+        }
+        else if (value === nodeState.Obstacle) {
+            if (targetNode === this.startNode)              // Dont allow Obstacle to overwrite Start/End
+                value = nodeState.Start;
+            else if (targetNode === this.endNode)
+                value = nodeState.End;            
+            else if (this.map[targetNode].getState() === value) // Toggle between Obstacle and Unvisited
+                value = nodeState.Unvisited;
+        }
+        this.map[targetNode].setState(value);               // Set this node after duplicate checks
+
+        // Future Dalton: log all states and sets for slider!
+    }
+    private getNode(targetNode:number) {
+        return this.map[targetNode].getState();
+    }
+    private generate10xTest() {
+        this.reset();
+        this.setNode(73, nodeState.Start);
+        this.setNode(18, nodeState.End);
+        this.setNode(23, nodeState.Obstacle);
+        this.setNode(34, nodeState.Obstacle);
+        this.setNode(44, nodeState.Obstacle);
+        this.setNode(45, nodeState.Obstacle);
+        this.setNode(55, nodeState.Obstacle);
+        this.setNode(56, nodeState.Obstacle);
+        this.setNode(58, nodeState.Obstacle);
+        this.setNode(0, nodeState.Obstacle);
+    }
+    private generate5xTest() {
+        this.reset();
+        this.setNode(0, nodeState.Start);
+        this.setNode(24, nodeState.End);
+        this.setNode(11, nodeState.Obstacle);
+        this.setNode(12, nodeState.Obstacle);
+        this.setNode(13, nodeState.Obstacle);
+    }
+    private generateRandomTest() {
+        this.reset();
+        let start = Math.floor(Math.random() * visSize);
+        let end = visSize - Math.floor(Math.random() * visSize);
+        for (let i = 0; i < rowSize*2; i++)
+            this.setNode(Math.floor(Math.random() * visSize), nodeState.Obstacle);
+        this.setNode(start, nodeState.Start);
+        this.setNode(end, nodeState.End);
+    }
+    private generateTest() {
+        if (rowSize === 5)
+            this.generate5xTest();
+        else if (rowSize === 10)
+            this.generate10xTest();
+        else 
+            this.generateRandomTest();
+    }
+
+    public clear() {                                        // Reset any visited/path nodes, step log
+        for (let i = 0; i < visSize; i++) {                 // Use between different runs on the same map
             if (this.map[i].getState() === nodeState.Visited
                 || this.map[i].getState() === nodeState.Path) {
                 this.map[i].setState(nodeState.Unvisited);
@@ -78,35 +178,155 @@ class Visualizer {
 
         // Future Dalton: reset step log!
     }
-    public setNode(targetNode:number, value:nodeState) {    // Set the status of a given node
-        this.map[targetNode].setState(value);
-
-        // Future Dalton: log all states and sets for slider!
+    public place(newInputMode:nodeState) {                  // What kind of node are we setting?
+        this.inputMode = newInputMode;
     }
-    public getNode(targetNode:number) {
-        return this.map[targetNode].getState();
+    public toggle(targetNode:number) {                      // Toggle nodes from user input
+        if (this.isRunning) {}                              // Don't toggle nodes while an algorithm is running
+        else if (this.inputMode === nodeState.Obstacle) 
+            this.setNode(targetNode, nodeState.Obstacle);
+        else if (this.inputMode === nodeState.Start) 
+            this.setNode(targetNode, nodeState.Start);
+        else if (this.inputMode === nodeState.End)
+            this.setNode(targetNode, nodeState.End);
+
+    }
+    public setMode(newMode:visMode) {
+        this.mode = newMode;
+    }
+    public run() {                                          // Start pathfinding with the specified mode
+        this.isRunning = false;
+        if (this.mode === visMode.Auto) {
+            this.generate10xTest();
+            setTimeout(() => {
+                this.run();
+            }, 500);
+        }
+
+        else if (this.mode === visMode.Dijkstra) {
+            this.generateTest();
+            setTimeout(() => {
+                dijkstra(this.map, this.startNode, this.endNode);
+            }, 0);
+        }
+    }
+    public stop() {                                         // Used to stop Auto Mode
+        this.isRunning = false;
+    }
+
+    public sandbox() {
+        let testVal:number = -1;
+        this.setNode(testVal, nodeState.Start);
+        let testArray = getUnvisitedNeighbors(testVal, this.map);
+        for (const neighbor of testArray) {
+            this.map[neighbor].setState(nodeState.Path);
+            console.log(neighbor);
+        }
     }
 }
 
-function generateTestMap() {
+function generateRandomMap() {
     visualizer.reset();
-    visualizer.setNode(73, nodeState.Start);
-    visualizer.setNode(18, nodeState.End);
-    visualizer.setNode(23, nodeState.Obstacle);
-    visualizer.setNode(34, nodeState.Obstacle);
-    visualizer.setNode(44, nodeState.Obstacle);
-    visualizer.setNode(45, nodeState.Obstacle);
-    visualizer.setNode(55, nodeState.Obstacle);
-    visualizer.setNode(56, nodeState.Obstacle);
-    visualizer.setNode(58, nodeState.Obstacle);
+    let startNode = Math.floor(Math.random() * visSize);
+    let endNode = Math.floor(Math.random() * visSize);
+    let obstacle = Math.floor(Math.random() * visSize);
+    while (startNode === endNode)
+        endNode = Math.floor(Math.random() * visSize);
+    visualizer.place(nodeState.Start);
+    visualizer.toggle(startNode);
+    visualizer.place(nodeState.End);
+    visualizer.toggle(endNode);
+    visualizer.place(nodeState.Obstacle);
+    for (let i = 0; i < 2*rowSize; i++) {
+        visualizer.toggle(obstacle);
+        obstacle = Math.floor(Math.random() * visSize);
+    }
 }
-
-function testAnimations() {
-    let targetNode = Math.floor(Math.random() * visSize);
-    let newState = Math.floor(Math.random() * 6);
-    visualizer.setNode(targetNode, newState);
-    setTimeout(testAnimations, 100);
-}
-
 let visualizer = new Visualizer;                            // Start the visualizer
-testAnimations();
+visualizer.run();
+
+
+// Pathfinding Algorithms and Components: 
+
+function dijkstra(map:Array<visNode>, startNode:number, endNode:number) {
+    let unvisitedNodes = new Array<number>;
+    for (let i = 0; i < visSize; i++)
+        unvisitedNodes.push(i);
+
+    let loopCount:number = 0;
+    while (!!unvisitedNodes.length) {
+        loopCount++;
+        sortNodesByDistance(unvisitedNodes, map);
+        const closestNode = unvisitedNodes.shift();
+        //console.log("Loop count: " + loopCount + " closest node: " + closestNode);
+        if (map[closestNode].getState() === nodeState.Obstacle) continue;    // Obstacle detection
+        if (map[closestNode].getDistance() === Infinity) break;              // Trap detection
+        if (map[closestNode].getState() !== nodeState.Start
+            && map[closestNode].getState() !== nodeState.End)
+            setTimeout(() => {
+                map[closestNode].setState(nodeState.Visited);                // Mark node visited
+            }, loopCount*100);
+        if (closestNode === endNode) {
+            console.log("Reached end node. " + endNode + " " + closestNode);
+            console.log("Dijkstra complete: drawing path from " + endNode);
+            setTimeout(() => {
+                drawPath(endNode, map);
+            }, loopCount*5 + 100);
+            break;
+        }
+        updateUnvisitedNeighbors(closestNode, map);
+    }
+    
+    visualizer.stop();
+}
+
+function sortNodesByDistance(unvisitedNodes:Array<number>, map:Array<visNode>) {
+    unvisitedNodes.sort((nodeA, nodeB) => map[nodeA].getDistance() - map[nodeB].getDistance());
+    return unvisitedNodes;
+}
+
+function updateUnvisitedNeighbors(targetNode:number, map:Array<visNode>) {
+    const unvisitedNeighbors:Array<number> = getUnvisitedNeighbors(targetNode, map);
+    for (const neighbor of unvisitedNeighbors) {
+        map[neighbor].setDistance(map[targetNode].getDistance() + 1);
+        map[neighbor].setPreviousNode(targetNode);
+    }
+}
+
+function getUnvisitedNeighbors(targetNode:number, map:Array<visNode>) {
+    const neighbors = new Array<number>;
+    if (targetNode - 1 >= 0 && targetNode % rowSize !== 0) {                // Check left
+        if (map[targetNode - 1].getState() !== nodeState.Visited) 
+            neighbors.push(targetNode - 1);
+    }
+    if (targetNode + 1 >= 0 && (targetNode + 1) % rowSize !== 0) {          // Check right
+        if (map[targetNode + 1].getState() !== nodeState.Visited)
+            neighbors.push(targetNode + 1);
+    }
+    if (targetNode - rowSize >= 0) {                                        // Check top
+        if (map[targetNode - rowSize].getState() !== nodeState.Visited)
+            neighbors.push(targetNode - rowSize);
+    }
+    if (targetNode + rowSize < visSize) {                                        // Check bottom
+        if (map[targetNode + rowSize].getState() !== nodeState.Visited)
+            neighbors.push(targetNode + rowSize);
+    }
+    return neighbors;
+}
+
+function drawPath(endNode:number, map:Array<visNode>) {
+    const path = [];
+    let currentNode:number = endNode;
+    let loopCount:number = 0;
+    while (map[currentNode] !== null && loopCount < 10) {
+        console.log("unshifting " + currentNode);
+        path.unshift(currentNode);
+        currentNode = map[currentNode].getPreviousNode();
+        loopCount++;
+    }
+    for (const node of path) {
+        if (map[node].getState() !== nodeState.Start
+            && map[node].getState() !== nodeState.End)
+        map[node].setState(nodeState.Path);
+    }
+}

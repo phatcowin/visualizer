@@ -1,5 +1,5 @@
 :root {
-    --unvisited: #CCCCCC;                             /* Store status colors as variables       */
+    --unvisited: #CCCCCC;                           /* Store status colors as variables       */
     --visited: green;                               /* so they can be easily manipulated      */
     --obstacle: #222222;
     --start: blue;
@@ -9,43 +9,41 @@
 
 body {
     margin: 0;
+    width: 100%;
+    height: 100%;
 }
 
 .map-container {
     width: 1000px;
     height: 1000px;
-    margin: 0px;
-    padding: 0;
-    outline: solid 1px black;
-    background-color: midnightblue;
+    padding: 15px;
+    border-radius: 20px;
+    background-color: #DDDDDD;
     line-height: 0;
+    margin: 10px auto;
 }
 
 .vis-node {
-    width: 100px;                                   /* Set width/height to 10px for 100x100  */
-    height: 100px;                                  /* 20px for 50x50, 100px for 10x10       */
-    outline: solid 1px black;
+    width: 10px;                                   /* Set width/height to 10px for 100x100  */
+    height: 10px;                                  /* 20px for 50x50, 100px for 10x10       */
+    outline: solid 3px #DDDDDD;                   /* 200px for 5x5                         */
     background-color: var(--unvisited);
     display: inline-block;
     position: top;
-    margin: 0;
+    margin: auto;
     transition: background-color 0ms;
+    color: black;
+    font: helvetica;
+    font-size: 20pt;
 }
 
-.test {
-    width: 400px;
-    height: 400px;
-    position: absolute;
-    top: 0px;
-    left: 0px;
-    background-color: blue;
+.button {
+    width: 100px;
+    height: 40px;
+    background-color: crimson;
+    display: inline-block;
 }
 
-#test {
-    width: 400px;
-    height: 400px;
-    position: absolute;
-    top: 0px;
-    left: 0px;
-    background-color: blue;
+.button .pressed {
+    background-color: green;
 }
