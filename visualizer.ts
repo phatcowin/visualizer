@@ -148,7 +148,7 @@ class Visualizer {
         this.reset();
         let start = Math.floor(Math.random() * visSize);
         let end = visSize - Math.floor(Math.random() * visSize);
-        for (let i = 0; i < rowSize*4; i++)
+        for (let i = 0; i < visSize/2.5; i++)
             this.setNode(Math.floor(Math.random() * visSize), nodeState.Obstacle);
         this.setNode(start, nodeState.Start);
         this.setNode(end, nodeState.End);

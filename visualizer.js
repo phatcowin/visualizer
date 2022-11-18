@@ -143,7 +143,7 @@ var Visualizer = /** @class */ (function () {
         this.reset();
         var start = Math.floor(Math.random() * visSize);
         var end = visSize - Math.floor(Math.random() * visSize);
-        for (var i = 0; i < rowSize * 4; i++)
+        for (var i = 0; i < visSize / 2.5; i++)
             this.setNode(Math.floor(Math.random() * visSize), nodeState.Obstacle);
         this.setNode(start, nodeState.Start);
         this.setNode(end, nodeState.End);
