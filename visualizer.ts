@@ -1,6 +1,6 @@
 // Visualizer Components and Properties:
 
-let rowSize = 100;                                         // Adjust the map size with rowSize
+let rowSize = 50;                                         // Adjust the map size with rowSize
 let visSize = rowSize * rowSize;                          // Map size = rowSize^2
 
 enum nodeState {                                            // Create an enum to reference our node states
@@ -148,7 +148,7 @@ class Visualizer {
         this.reset();
         let start = Math.floor(Math.random() * visSize);
         let end = visSize - Math.floor(Math.random() * visSize);
-        for (let i = 0; i < rowSize*2; i++)
+        for (let i = 0; i < rowSize*4; i++)
             this.setNode(Math.floor(Math.random() * visSize), nodeState.Obstacle);
         this.setNode(start, nodeState.Start);
         this.setNode(end, nodeState.End);
@@ -204,7 +204,7 @@ class Visualizer {
         }
 
         else if (this.mode === visMode.Dijkstra) {
-            this.generateTest();
+            this.generateRandomTest();
             setTimeout(() => {
                 dijkstra(this.map, this.startNode, this.endNode);
             }, 0);
@@ -265,13 +265,13 @@ function dijkstra(map:Array<visNode>, startNode:number, endNode:number) {
             && map[closestNode].getState() !== nodeState.End)
             setTimeout(() => {
                 map[closestNode].setState(nodeState.Visited);                // Mark node visited
-            }, loopCount*100);
+            }, loopCount*1);
         if (closestNode === endNode) {
             console.log("Reached end node. " + endNode + " " + closestNode);
             console.log("Dijkstra complete: drawing path from " + endNode);
             setTimeout(() => {
-                drawPath(endNode, map);
-            }, loopCount*5 + 100);
+                drawPath(startNode, endNode, map);
+            }, loopCount*1 + 100);
             break;
         }
         updateUnvisitedNeighbors(closestNode, map);
@@ -288,8 +288,10 @@ function sortNodesByDistance(unvisitedNodes:Array<number>, map:Array<visNode>) {
 function updateUnvisitedNeighbors(targetNode:number, map:Array<visNode>) {
     const unvisitedNeighbors:Array<number> = getUnvisitedNeighbors(targetNode, map);
     for (const neighbor of unvisitedNeighbors) {
+        //console.log("update neighbors: " + targetNode + " neighbor " + neighbor);
         map[neighbor].setDistance(map[targetNode].getDistance() + 1);
-        map[neighbor].setPreviousNode(targetNode);
+        if (map[neighbor].getPreviousNode() === null)
+            map[neighbor].setPreviousNode(targetNode);
     }
 }
 
@@ -314,11 +316,11 @@ function getUnvisitedNeighbors(targetNode:number, map:Array<visNode>) {
     return neighbors;
 }
 
-function drawPath(endNode:number, map:Array<visNode>) {
+function drawPath(startNode:number, endNode:number, map:Array<visNode>) {
     const path = [];
     let currentNode:number = endNode;
     let loopCount:number = 0;
-    while (map[currentNode] !== null && loopCount < 10) {
+    while (currentNode !== startNode && loopCount < 1000) {
         console.log("unshifting " + currentNode);
         path.unshift(currentNode);
         currentNode = map[currentNode].getPreviousNode();

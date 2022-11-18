@@ -1,5 +1,5 @@
 // Visualizer Components and Properties:
-var rowSize = 100; // Adjust the map size with rowSize
+var rowSize = 50; // Adjust the map size with rowSize
 var visSize = rowSize * rowSize; // Map size = rowSize^2
 var nodeState;
 (function (nodeState) {
@@ -143,7 +143,7 @@ var Visualizer = /** @class */ (function () {
         this.reset();
         var start = Math.floor(Math.random() * visSize);
         var end = visSize - Math.floor(Math.random() * visSize);
-        for (var i = 0; i < rowSize * 2; i++)
+        for (var i = 0; i < rowSize * 4; i++)
             this.setNode(Math.floor(Math.random() * visSize), nodeState.Obstacle);
         this.setNode(start, nodeState.Start);
         this.setNode(end, nodeState.End);
@@ -196,7 +196,7 @@ var Visualizer = /** @class */ (function () {
             }, 500);
         }
         else if (this.mode === visMode.Dijkstra) {
-            this.generateTest();
+            this.generateRandomTest();
             setTimeout(function () {
                 dijkstra(_this.map, _this.startNode, _this.endNode);
             }, 0);
@@ -255,13 +255,13 @@ function dijkstra(map, startNode, endNode) {
             && map[closestNode].getState() !== nodeState.End)
             setTimeout(function () {
                 map[closestNode].setState(nodeState.Visited); // Mark node visited
-            }, loopCount * 100);
+            }, loopCount * 1);
         if (closestNode === endNode) {
             console.log("Reached end node. " + endNode + " " + closestNode);
             console.log("Dijkstra complete: drawing path from " + endNode);
             setTimeout(function () {
-                drawPath(endNode, map);
-            }, loopCount * 5 + 100);
+                drawPath(startNode, endNode, map);
+            }, loopCount * 1 + 100);
             return "break";
         }
         updateUnvisitedNeighbors(closestNode, map);
@@ -281,8 +281,10 @@ function updateUnvisitedNeighbors(targetNode, map) {
     var unvisitedNeighbors = getUnvisitedNeighbors(targetNode, map);
     for (var _i = 0, unvisitedNeighbors_1 = unvisitedNeighbors; _i < unvisitedNeighbors_1.length; _i++) {
         var neighbor = unvisitedNeighbors_1[_i];
+        //console.log("update neighbors: " + targetNode + " neighbor " + neighbor);
         map[neighbor].setDistance(map[targetNode].getDistance() + 1);
-        map[neighbor].setPreviousNode(targetNode);
+        if (map[neighbor].getPreviousNode() === null)
+            map[neighbor].setPreviousNode(targetNode);
     }
 }
 function getUnvisitedNeighbors(targetNode, map) {
@@ -305,11 +307,11 @@ function getUnvisitedNeighbors(targetNode, map) {
     }
     return neighbors;
 }
-function drawPath(endNode, map) {
+function drawPath(startNode, endNode, map) {
     var path = [];
     var currentNode = endNode;
     var loopCount = 0;
-    while (map[currentNode] !== null && loopCount < 10) {
+    while (currentNode !== startNode && loopCount < 1000) {
         console.log("unshifting " + currentNode);
         path.unshift(currentNode);
         currentNode = map[currentNode].getPreviousNode();
