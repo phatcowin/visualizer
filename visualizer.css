@@ -1,10 +1,12 @@
 :root {
     --unvisited: #CCCCCC;                           /* Store status colors as variables       */
-    --visited: #00CC77;                               /* so they can be easily manipulated      */
+    --visited1: #00CC77;                               /* so they can be easily manipulated      */
+    --visited2: #00CCFF;
     --obstacle: #222222;
     --start: #2F2FFF;
     --end: red;
-    --path: #CC00FF;
+    --path1: #CC00FF;
+    --path2: #FFFF00;
     --unsolvable: orange;
 }
 
