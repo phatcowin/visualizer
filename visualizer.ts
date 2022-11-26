@@ -1,9 +1,9 @@
 // Config:                               //////////////////////////////////////////////////////////////////////////
-let rowSize = 100;                                           // Adjust the map size with rowSize
+let rowSize = 50;                                           // Adjust the map size with rowSize
 let visSize = rowSize * rowSize;                            // Map size = rowSize^2
 let visitAnimationSpeed = 1;
 let pathAnimationSpeed = 20;
-let autoResetSpeed = 2000;
+let autoResetSpeed = 1000;
 let pathfindSpeed = 5000;                                  // How long does pathfinding take???
 let showNodeNumber = false;
 

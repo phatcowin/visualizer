@@ -1,9 +1,9 @@
 // Config:                               //////////////////////////////////////////////////////////////////////////
-var rowSize = 100; // Adjust the map size with rowSize
+var rowSize = 50; // Adjust the map size with rowSize
 var visSize = rowSize * rowSize; // Map size = rowSize^2
 var visitAnimationSpeed = 1;
 var pathAnimationSpeed = 20;
-var autoResetSpeed = 2000;
+var autoResetSpeed = 1000;
 var pathfindSpeed = 5000; // How long does pathfinding take???
 var showNodeNumber = false;
 // Visualizer Components and Properties: //////////////////////////////////////////////////////////////////////////

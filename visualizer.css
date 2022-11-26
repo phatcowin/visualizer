@@ -1,10 +1,10 @@
 :root {
     --unvisited: #CCCCCC;                           /* Store status colors as variables       */
-    --visited: green;                               /* so they can be easily manipulated      */
+    --visited: #00CC77;                               /* so they can be easily manipulated      */
     --obstacle: #222222;
-    --start: blue;
+    --start: #2F2FFF;
     --end: red;
-    --path: purple;
+    --path: #CC00FF;
     --unsolvable: orange;
 }
 
@@ -25,8 +25,8 @@ body {
 }
 
 .vis-node {
-    width: 10px;                                   /* Set width/height to 10px for 100x100  */
-    height: 10px;                                  /* 20px for 50x50, 100px for 10x10       */
+    width: 20px;                                   /* Set width/height to 10px for 100x100  */
+    height: 20px;                                  /* 20px for 50x50, 100px for 10x10       */
     outline: solid 3px #DDDDDD;                   /* 200px for 5x5                         */
     background-color: var(--unvisited);
     display: inline-block;
