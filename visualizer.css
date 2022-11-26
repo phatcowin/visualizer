@@ -5,6 +5,7 @@
     --start: blue;
     --end: red;
     --path: purple;
+    --unsolvable: orange;
 }
 
 body {
@@ -24,8 +25,8 @@ body {
 }
 
 .vis-node {
-    width: 20px;                                   /* Set width/height to 10px for 100x100  */
-    height: 20px;                                  /* 20px for 50x50, 100px for 10x10       */
+    width: 10px;                                   /* Set width/height to 10px for 100x100  */
+    height: 10px;                                  /* 20px for 50x50, 100px for 10x10       */
     outline: solid 3px #DDDDDD;                   /* 200px for 5x5                         */
     background-color: var(--unvisited);
     display: inline-block;

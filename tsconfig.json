@@ -1,6 +1,5 @@
 {
     "compilerOptions": {
-        "lib": ["dom", "es2015"],
         "target": "es6",
         "module": "commonjs",
         "sourceMap": true
