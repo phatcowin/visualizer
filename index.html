@@ -4,6 +4,26 @@
     <link rel="stylesheet" type="text/css" href="visualizer.css"></rel>         <!--    Include CSS     -->
 </head>
 <body>
+    <div class="controls">
+        <input type="button" id="start" value="start" onClick="start()">
+        <input type="button" id="halt" value="stop" onClick="halt()">
+        <input type="button" id="auto" value="auto" onClick="auto()">
+        <input type="button" id="dijkstra" value="dijkstra/bfs" onClick="dijkstra()">
+        <input type="button" id="astar" value="a*" onClick="aStar()">
+        <input type="button" id="clear" value="clear" onclick="clearVis()">
+        <input type="button" id="reset" value="reset" onClick="resetVis()">
+        <input type="button" id="place" value="start/end nodes" onClick="set()">
+        <input type="button" id="generate" value="randomize" onClick="generate()">
+        <input type="button" id="fiveby" value="small" onClick="newVis(5)">
+        <input type="button" id="tenby" value="medium" onClick="newVis(10)">
+        <input type="button" id="fiftyby" value="large" onClick="newVis(50)">
+        <input type="button" id="hundredby" value="chungus" onClick="newVis(100)">
+        <input type="button" id="crawl" value="crawl" onClick="setSpeed(0)">
+        <input type="button" id="slow" value="slow" onClick="setSpeed(1)">
+        <input type="button" id="normal" value="normal" onClick="setSpeed(2)">
+        <input type="button" id="fast" value="fast" onClick="setSpeed(3)">
+        <input type="button" id="instant" value="instant" onClick="setSpeed(4)">
+    </div>
     <script type="text/javascript" src="visualizer.js"></script>                <!-- Include visualizer -->
 </body>
 </html>

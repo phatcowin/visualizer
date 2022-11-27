@@ -5,7 +5,8 @@ var visSize = rowSize * rowSize; // Map size = rowSize^2
 var visitAnimationSpeed = 1;
 var pathAnimationSpeed = 20;
 var autoResetSpeed = 1000;
-var pathfindSpeed = 5000; // How long does pathfinding take???
+var heuristicWeight = 2; // Set the weight for A*'s heuristic component
+var heuristicIsExponent = false;
 var showNodeNumber = false;
 // Visualizer Components and Properties: /////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -23,9 +24,9 @@ var nodeState;
 })(nodeState || (nodeState = {}));
 var visMode;
 (function (visMode) {
-    visMode[visMode["None"] = 0] = "None";
-    visMode[visMode["Auto"] = 1] = "Auto";
-    visMode[visMode["Dijkstra"] = 2] = "Dijkstra";
+    visMode[visMode["Auto"] = 0] = "Auto";
+    visMode[visMode["Dijkstra"] = 1] = "Dijkstra";
+    visMode[visMode["AStar"] = 2] = "AStar";
 })(visMode || (visMode = {}));
 var visNode = /** @class */ (function () {
     function visNode(visNodeID) {
@@ -72,9 +73,7 @@ var visNode = /** @class */ (function () {
         else if (newState === nodeState.Unsolvable)
             this.div.style.backgroundColor = 'var(--unsolvable)';
     };
-    visNode.prototype.getNodeNumber = function () {
-        return this.nodeID;
-    };
+    visNode.prototype.getNodeNumber = function () { return this.nodeID; };
     return visNode;
 }());
 var Visualizer = /** @class */ (function () {
@@ -85,8 +84,13 @@ var Visualizer = /** @class */ (function () {
         this.endNode = -1;
         this.mode = visMode.Dijkstra; // Run mode (Dijkstra's, Auto, etc)
         this.isRunning = false; // Run switch
+        this.halted = false;
         this.inputMode = nodeState.Obstacle; // When a user clicks, what are they trying to place?
+        this.current = 0;
         this.autoTimeout = 1;
+        this.totalPathDiff = 0;
+        this.totalVisitDiff = 0;
+        this.updateCount = 0;
         document.body.appendChild(this.div);
         this.div.className = 'map-container';
         this.div.setAttribute('id', 'vis-container');
@@ -117,9 +121,7 @@ var Visualizer = /** @class */ (function () {
         }
         this.map[targetNode].setState(value); // Set this node after duplicate checks
     };
-    Visualizer.prototype.getNode = function (targetNode) {
-        return this.map[targetNode].getState();
-    };
+    Visualizer.prototype.getNode = function (targetNode) { return this.map[targetNode].getState(); };
     Visualizer.prototype.generateTest = function () {
         this.reset();
         var start = Math.floor(Math.random() * visSize);
@@ -131,9 +133,45 @@ var Visualizer = /** @class */ (function () {
         this.setNode(start, nodeState.Start);
         this.setNode(end, nodeState.End);
     };
+    Visualizer.prototype.generateMaze = function () {
+        var x = 0;
+        var y = 0;
+        for (y = 0; y < rowSize; y++) {
+            for (x = 0; x < rowSize; x++) {
+                if ((x % 4 == 0 || y % 4 == 0)) {
+                    var target_1 = this.map[y * rowSize + x];
+                    target_1.setState(nodeState.Obstacle);
+                }
+            }
+        }
+        var target = 0;
+        var state = nodeState.Obstacle;
+        do {
+            target = Math.floor(Math.random() * visSize);
+            state = this.map[target].getState();
+        } while (state == nodeState.Obstacle);
+        this.map[target].setState(nodeState.Start);
+        do {
+            target = Math.floor(Math.random() * visSize);
+            state = this.map[target].getState();
+        } while (state == nodeState.Obstacle || state == nodeState.Start);
+        this.map[target].setState(nodeState.End);
+    };
     Visualizer.prototype.reset = function () {
-        for (var i = 0; i < visSize; i++) {
-            this.map[i].setState(nodeState.Unvisited);
+        for (var _i = 0, _a = this.map; _i < _a.length; _i++) {
+            var node = _a[_i];
+            node.setState(nodeState.Unvisited);
+        }
+    };
+    Visualizer.prototype.clear = function () {
+        for (var _i = 0, _a = this.map; _i < _a.length; _i++) {
+            var node = _a[_i];
+            var state = node.getState();
+            if (state == nodeState.Path1 ||
+                state == nodeState.Path2 ||
+                state == nodeState.Visited1 ||
+                state == nodeState.Visited2)
+                node.setState(nodeState.Unvisited);
         }
     };
     Visualizer.prototype.place = function (newInputMode) {
@@ -157,20 +195,81 @@ var Visualizer = /** @class */ (function () {
     };
     Visualizer.prototype.stop = function () {
         this.isRunning = false;
+        this.halted = true;
     };
     Visualizer.prototype.auto = function () {
         var _this = this;
-        if (!this.isRunning) {
+        if (!this.isRunning && !this.halted) {
             this.isRunning = true;
             visualizer.reset(); // Create a fresh maze
             visualizer.generateTest();
-            console.clear();
             setTimeout(function () { visualizer.run(); }, 0); // Crashes without the timeout for some reason
             this.auto();
         }
         if (this.isRunning) {
             setTimeout(function () { _this.auto(); }, 500);
         }
+    };
+    Visualizer.prototype.draw2 = function (target) {
+        var _this = this;
+        var dVisit = this.result.getDijkstraVisit(); // Get our paths
+        var dPath = this.result.getDijkstraPath();
+        var aVisit = this.result.getAStarVisit();
+        var aPath = this.result.getAStarPath();
+        var dVisitThreshold = dVisit.length; // Relate our target to the correct arrays
+        var dPathThreshold = dPath.length + dVisitThreshold;
+        var aVisitThreshold = aVisit.length + dPathThreshold;
+        var end = aPath.length + aVisitThreshold;
+        var current = this.current; // Create an iterator based on where we are
+        var timing = 1; // Make sure our animations occur in time
+        if (current < target) {
+            var _loop_1 = function () {
+                var timeout = timing;
+                var state = 0;
+                var node = current;
+                (current < dVisitThreshold) ? // ternary fun! select our animation speed &
+                    (timeout *= visitAnimationSpeed, node = dVisit[node], state = nodeState.Visited1) : // target node/state
+                    (current < dPathThreshold) ? // based on the thresholds current has crossed
+                        (timeout *= pathAnimationSpeed, node = dPath[node - dVisitThreshold], state = nodeState.Path1) :
+                        (current < aVisitThreshold) ?
+                            (timeout *= visitAnimationSpeed, node = aVisit[node - dPathThreshold], state = nodeState.Visited2) :
+                            (timeout *= pathAnimationSpeed, node = aPath[node - aVisitThreshold], state = nodeState.Path2);
+                setTimeout(function () {
+                    if (current > 0 && current < end) // dont draw over our start/end nodes
+                        _this.map[node].setState(state);
+                }, timeout);
+                timing++;
+                current++;
+            };
+            while (current < target) {
+                _loop_1();
+            }
+        }
+        else {
+            var _loop_2 = function () {
+                var timeout = timing;
+                var state = 0;
+                (current < dVisitThreshold) ? (timeout *= visitAnimationSpeed, state = nodeState.Unvisited) :
+                    (current < dPathThreshold) ? (timeout *= pathAnimationSpeed, state = nodeState.Visited1) :
+                        (current < aVisitThreshold) ? (timeout *= visitAnimationSpeed, state = nodeState.Visited1) :
+                            (timeout *= pathAnimationSpeed, state = nodeState.Visited2);
+                setTimeout(function () {
+                    if (current > 0 && current < end)
+                        _this.map[current].setState(state);
+                }, timeout);
+                if (timing == aVisitThreshold) {
+                    for (var i = 0; i < dPath.length; i++)
+                        this_1.map[i].setState(nodeState.Path1);
+                }
+                timing++;
+                current--;
+            };
+            var this_1 = this;
+            while (current > target) {
+                _loop_2();
+            }
+        }
+        this.current = current; // Update the visualizer's current step
     };
     Visualizer.prototype.draw = function (result) {
         var _this = this;
@@ -179,81 +278,96 @@ var Visualizer = /** @class */ (function () {
         var aVisited = result.getAStarVisit();
         var aPath = result.getAStarPath();
         var timing = 0;
-        var _loop_1 = function (node) {
-            setTimeout(function () {
-                if (node !== _this.startNode && node !== _this.endNode)
-                    _this.map[node].setState(nodeState.Visited1);
-            }, timing);
-            timing += visitAnimationSpeed;
-        };
-        for (var _i = 0, dVisited_1 = dVisited; _i < dVisited_1.length; _i++) {
-            var node = dVisited_1[_i];
-            _loop_1(node);
-        }
-        if (dPath.length < 1) {
-            setTimeout(function () {
-                for (var _i = 0, dVisited_2 = dVisited; _i < dVisited_2.length; _i++) {
-                    var node = dVisited_2[_i];
-                    if (node !== _this.startNode && node !== _this.endNode)
-                        _this.map[node].setState(nodeState.Unsolvable);
-                }
-            }, timing);
-        }
-        else {
-            var _loop_2 = function (node) {
+        if (this.mode == visMode.Dijkstra || this.mode == visMode.Auto) {
+            var _loop_3 = function (node) {
                 setTimeout(function () {
                     if (node !== _this.startNode && node !== _this.endNode)
-                        _this.map[node].setState(nodeState.Path1);
+                        _this.map[node].setState(nodeState.Visited1);
                 }, timing);
-                timing += pathAnimationSpeed;
+                timing += visitAnimationSpeed;
             };
-            for (var _a = 0, dPath_1 = dPath; _a < dPath_1.length; _a++) {
-                var node = dPath_1[_a];
-                _loop_2(node);
+            for (var _i = 0, dVisited_1 = dVisited; _i < dVisited_1.length; _i++) {
+                var node = dVisited_1[_i];
+                _loop_3(node);
             }
-            timing += autoResetSpeed;
-        }
-        timing += autoResetSpeed;
-        var _loop_3 = function (node) {
-            setTimeout(function () {
-                if (node !== _this.startNode && node !== _this.endNode && _this.map[node].getState() !== nodeState.Path1)
-                    _this.map[node].setState(nodeState.Visited2);
-            }, timing);
-            timing += visitAnimationSpeed;
-        };
-        for (var _b = 0, aVisited_1 = aVisited; _b < aVisited_1.length; _b++) {
-            var node = aVisited_1[_b];
-            _loop_3(node);
-        }
-        if (aPath.length < 1) {
-            setTimeout(function () {
-                for (var _i = 0, aVisited_2 = aVisited; _i < aVisited_2.length; _i++) {
-                    var node = aVisited_2[_i];
-                    if (node !== _this.startNode && node !== _this.endNode)
-                        _this.map[node].setState(nodeState.Unsolvable);
-                }
-            }, timing);
-        }
-        else {
-            var _loop_4 = function (node) {
+            if (dPath.length < 1) {
                 setTimeout(function () {
-                    if (node !== _this.startNode && node !== _this.endNode)
-                        _this.map[node].setState(nodeState.Path2);
+                    for (var _i = 0, dVisited_2 = dVisited; _i < dVisited_2.length; _i++) {
+                        var node = dVisited_2[_i];
+                        if (node !== _this.startNode && node !== _this.endNode)
+                            _this.map[node].setState(nodeState.Unsolvable);
+                    }
                 }, timing);
-                timing += pathAnimationSpeed;
+            }
+            else {
+                var _loop_4 = function (node) {
+                    setTimeout(function () {
+                        if (node !== _this.startNode && node !== _this.endNode)
+                            _this.map[node].setState(nodeState.Path1);
+                    }, timing);
+                    timing += pathAnimationSpeed;
+                };
+                for (var _a = 0, dPath_1 = dPath; _a < dPath_1.length; _a++) {
+                    var node = dPath_1[_a];
+                    _loop_4(node);
+                }
+            }
+        }
+        if (this.mode == visMode.AStar || this.mode == visMode.Auto) {
+            var _loop_5 = function (node) {
+                setTimeout(function () {
+                    if (node !== _this.startNode && node !== _this.endNode && _this.map[node].getState() !== nodeState.Path1)
+                        _this.map[node].setState(nodeState.Visited2);
+                }, timing);
+                timing += visitAnimationSpeed;
             };
-            for (var _c = 0, aPath_1 = aPath; _c < aPath_1.length; _c++) {
-                var node = aPath_1[_c];
-                _loop_4(node);
+            for (var _b = 0, aVisited_1 = aVisited; _b < aVisited_1.length; _b++) {
+                var node = aVisited_1[_b];
+                _loop_5(node);
+            }
+            if (aPath.length < 1) {
+                setTimeout(function () {
+                    for (var _i = 0, aVisited_2 = aVisited; _i < aVisited_2.length; _i++) {
+                        var node = aVisited_2[_i];
+                        if (node !== _this.startNode && node !== _this.endNode)
+                            _this.map[node].setState(nodeState.Unsolvable);
+                    }
+                }, timing);
+            }
+            else {
+                var _loop_6 = function (node) {
+                    setTimeout(function () {
+                        if (node !== _this.startNode && node !== _this.endNode)
+                            _this.map[node].setState(nodeState.Path2);
+                    }, timing);
+                    timing += pathAnimationSpeed;
+                };
+                for (var _c = 0, aPath_1 = aPath; _c < aPath_1.length; _c++) {
+                    var node = aPath_1[_c];
+                    _loop_6(node);
+                }
             }
         }
         setTimeout(function () { _this.isRunning = false; }, timing + autoResetSpeed);
     };
     Visualizer.prototype.run = function () {
+        console.clear();
         this.isRunning = true;
+        if (this.halted) {
+            this.halted = false;
+        }
         var run = new PathFind;
         this.result = run;
         run.update(this.map, this.startNode, this.endNode);
+        this.updateCount++;
+        var pathDiff = this.result.dijkstraPath.length - this.result.aStarPath.length;
+        var visitDiff = this.result.dijkstraVisit.length - this.result.aStarVisit.length;
+        this.totalPathDiff += pathDiff;
+        this.totalVisitDiff += visitDiff;
+        var avgPath = this.totalPathDiff / this.updateCount;
+        var avgVisit = this.totalVisitDiff / this.updateCount;
+        console.log("difference: " + pathDiff + " " + visitDiff);
+        console.log("average: " + avgPath + " " + avgVisit);
         this.render();
     };
     Visualizer.prototype.render = function () {
@@ -294,10 +408,6 @@ var PathFind = /** @class */ (function () {
         this.dijkstraVisit = new Array();
         this.aStarPath = new Array();
         this.aStarVisit = new Array();
-        this.diffPathTotal = 0;
-        this.diffVisitTotal = 0;
-        this.diffPathAvg = 0;
-        this.diffVisitAvg = 0;
         this.updateCount = 0;
         this.grid = new Array();
         this.start = null;
@@ -335,7 +445,7 @@ var PathFind = /** @class */ (function () {
     };
     PathFind.prototype.runNext = function () {
         var _this = this;
-        if (this.dijkstraDone && this.dijkstraPath.length > 0) {
+        if (this.dijkstraDone) {
             this.reset();
             this.aStar();
         }
@@ -351,7 +461,7 @@ var PathFind = /** @class */ (function () {
             if (closestNode.isObstacle)
                 continue;
             if (closestNode.distance === Infinity) {
-                this.done = true;
+                this.dijkstraDone = true;
                 break;
             }
             closestNode.isVisited = true;
@@ -362,7 +472,7 @@ var PathFind = /** @class */ (function () {
                 this.drawDijkstraPath(this.end);
                 break;
             }
-            this.updateUnvisitedNeighbors(closestNode);
+            this.updateUnvisitedNeighbors(closestNode, true);
         }
     };
     PathFind.prototype.aStar = function () {
@@ -385,7 +495,7 @@ var PathFind = /** @class */ (function () {
                 this.drawAStarPath(this.end);
                 break;
             }
-            this.updateUnvisitedNeighbors(closestNode);
+            this.updateUnvisitedNeighbors(closestNode, true);
         }
     };
     PathFind.prototype.sortNodesByDistance = function (unvisitedNodes) {
@@ -394,12 +504,18 @@ var PathFind = /** @class */ (function () {
     PathFind.prototype.sortNodesByCost = function (unvisitedNodes) {
         unvisitedNodes.sort(function (nodeA, nodeB) { return nodeA.cost - nodeB.cost; });
     };
-    PathFind.prototype.updateUnvisitedNeighbors = function (node) {
+    PathFind.prototype.updateUnvisitedNeighbors = function (node, useHeuristics) {
         var unvisitedNeighbors = this.getNeighbors(node);
         for (var _i = 0, unvisitedNeighbors_1 = unvisitedNeighbors; _i < unvisitedNeighbors_1.length; _i++) {
             var neighbor = unvisitedNeighbors_1[_i];
             neighbor.distance = node.distance + 1;
-            neighbor.cost = neighbor.distance + this.estimateDistance(neighbor.id);
+            var distance = node.distance + 1;
+            neighbor.cost = distance;
+            if (useHeuristics) {
+                var estimatedDistance = this.estimateDistance(neighbor.id);
+                neighbor.cost += (heuristicIsExponent) ? Math.pow(estimatedDistance, heuristicWeight) :
+                    estimatedDistance * heuristicWeight;
+            }
             neighbor.previous = node;
         }
     };
@@ -438,41 +554,27 @@ var PathFind = /** @class */ (function () {
         }
         this.done = true;
         console.log("astar: " + this.aStarPath.length + " " + this.aStarVisit.length);
-        var diffPath = this.dijkstraPath.length - this.aStarPath.length;
-        var diffVisit = this.dijkstraVisit.length - this.aStarVisit.length;
-        this.diffPathTotal += diffPath;
-        this.diffVisitTotal += diffVisit;
-        this.diffPathAvg = this.diffPathTotal / this.updateCount;
-        this.diffVisitAvg = this.diffVisitTotal / this.updateCount;
-        console.log("difference: " + diffPath + " " + diffVisit);
-        console.log("average: " + this.diffPathAvg + " " + this.diffVisitAvg);
     };
     PathFind.prototype.estimateDistance = function (node) {
         var end = this.end.id;
-        var location = node.id;
+        var current = node.id;
         var distance = 0;
-        var x = 0;
-        var y = 0;
-        while (location > rowSize) {
-            location -= rowSize;
-            x++;
+        while (current % rowSize < end % rowSize) {
+            current++;
+            distance++;
         }
-        while (end > rowSize) {
-            end -= rowSize;
-            y++;
+        while (current % rowSize > end % rowSize) {
+            current--;
+            distance++;
         }
-        distance += Math.abs(x - y);
-        x = 0;
-        y = 0;
-        while (location > 0) {
-            location -= 1;
-            x++;
+        while (current < end) {
+            current += rowSize;
+            distance++;
         }
-        while (end > 0) {
-            end -= 1;
-            y++;
+        while (current > end) {
+            current -= rowSize;
+            distance++;
         }
-        distance += Math.abs(x - y);
         return distance;
     };
     PathFind.prototype.getNeighbors = function (targetNode) {
@@ -499,7 +601,63 @@ var PathFind = /** @class */ (function () {
     };
     return PathFind;
 }());
-// Runtime: //////////////////////////////////////////////////////////////////////////////////////////////////////
+// Controls:                               ///////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+function start() {
+    visualizer.clear();
+    visualizer.run();
+}
+function halt() {
+    visualizer.stop();
+}
+function auto() {
+    visualizer.setMode(visMode.Auto);
+    visualizer.auto();
+}
+function dijkstra() {
+    visualizer.setMode(visMode.Dijkstra);
+}
+function aStar() {
+    visualizer.setMode(visMode.AStar);
+}
+function set() {
+    visualizer.place(nodeState.Start);
+}
+function generate() {
+    visualizer.generateTest();
+}
+function resetVis() {
+    visualizer.reset();
+    visualizer.place(nodeState.Start);
+}
+function clearVis() {
+    visualizer.clear();
+    visualizer.place(nodeState.Start);
+}
+function setSpeed(speed) {
+    var crawl = 0;
+    var slow = 1;
+    var normal = 2;
+    var fast = 3;
+    (speed == crawl) ? (visitAnimationSpeed = 100, pathAnimationSpeed = 200) :
+        (speed == slow) ? (visitAnimationSpeed = 50, pathAnimationSpeed = 100) :
+            (speed == normal) ? (visitAnimationSpeed = 10, pathAnimationSpeed = 20) :
+                (speed == fast) ? (visitAnimationSpeed = 1, pathAnimationSpeed = 20) :
+                    (visitAnimationSpeed = 0, pathAnimationSpeed = 0);
+}
+function newVis(newSize) {
+    visualizer.div.parentElement.removeChild(visualizer.div);
+    var nodeSize = (newSize == 5) ? '200px' :
+        (newSize == 10) ? '100px' :
+            (newSize == 50) ? '20px' :
+                (newSize == 100) ? '10px' :
+                    '2px';
+    rowSize = newSize;
+    visSize = rowSize * rowSize;
+    var root = document.querySelector(':root');
+    root.style.setProperty('--nodeSize', nodeSize);
+    visualizer = new Visualizer;
+}
+// Runtime:                                ///////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 var visualizer = new Visualizer; // Start the visualizer
-visualizer.auto();

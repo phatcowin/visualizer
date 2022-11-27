@@ -1,13 +1,14 @@
 :root {
     --unvisited: #CCCCCC;                           /* Store status colors as variables       */
-    --visited1: #00CC77;                               /* so they can be easily manipulated      */
-    --visited2: #00CCFF;
+    --visited2: #00AA22;                            /* so they can be easily manipulated      */
+    --visited1: #00CCFF;
     --obstacle: #222222;
     --start: #2F2FFF;
     --end: red;
     --path1: #CC00FF;
     --path2: #FFFF00;
     --unsolvable: orange;
+    --nodeSize: 20px;
 }
 
 body {
@@ -20,16 +21,16 @@ body {
     width: 1000px;
     height: 1000px;
     padding: 15px;
-    border-radius: 20px;
+    border-radius: 15px;
     background-color: #DDDDDD;
     line-height: 0;
     margin: 10px auto;
 }
 
 .vis-node {
-    width: 20px;                                   /* Set width/height to 10px for 100x100  */
-    height: 20px;                                  /* 20px for 50x50, 100px for 10x10       */
-    outline: solid 3px #DDDDDD;                   /* 200px for 5x5                         */
+    width: var(--nodeSize);                                   /* Set width/height to 10px for 100x100  */
+    height: var(--nodeSize);                                  /* 20px for 50x50, 100px for 10x10       */
+    outline: solid 3px #DDDDDD;                  /* 200px for 5x5                         */
     background-color: var(--unvisited);
     display: inline-block;
     position: top;
@@ -39,13 +40,11 @@ body {
     font-size: 20pt;
 }
 
-.button {
-    width: 100px;
-    height: 40px;
-    background-color: crimson;
-    display: inline-block;
+.controls {
+    width: 1000px;
+    margin: 10px auto;
 }
 
-.button .pressed {
-    background-color: green;
+input {
+    font-size: 100pt;
 }
