@@ -603,6 +603,8 @@ function setSpeed(speed:number) {
 }
 function newVis(newSize:number) {
     visualizer.div.parentElement.removeChild(visualizer.div);
+    if (newSize > 200)
+        alert("Running the visualizer on this setting make take a while.");
 
     let containerSize = '500px';
     let nodeSize = '20%';
@@ -620,6 +622,11 @@ function newVis(newSize:number) {
         nodeSize = '0.5%';
         containerSize = '1000px';
         buttonSize = '20pt';
+    }
+    else if (newSize == 500) {
+        nodeSize = "0.2%";
+        containerSize = '2000px';
+        buttonSize = '40pt';
     }
 
     rowSize = newSize;
