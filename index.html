@@ -5,24 +5,46 @@
 </head>
 <body>
     <div class="controls">
-        <input type="button" id="start" value="start" onClick="start()">
-        <input type="button" id="halt" value="stop" onClick="halt()">
-        <input type="button" id="auto" value="auto" onClick="auto()">
-        <input type="button" id="dijkstra" value="dijkstra/bfs" onClick="dijkstra()">
-        <input type="button" id="astar" value="a*" onClick="aStar()">
-        <input type="button" id="clear" value="clear" onclick="clearVis()">
-        <input type="button" id="reset" value="reset" onClick="resetVis()">
-        <input type="button" id="place" value="start/end nodes" onClick="set()">
-        <input type="button" id="generate" value="randomize" onClick="generate()">
-        <input type="button" id="fiveby" value="small" onClick="newVis(5)">
-        <input type="button" id="tenby" value="medium" onClick="newVis(10)">
-        <input type="button" id="fiftyby" value="large" onClick="newVis(50)">
-        <input type="button" id="hundredby" value="chungus" onClick="newVis(100)">
-        <input type="button" id="crawl" value="crawl" onClick="setSpeed(0)">
-        <input type="button" id="slow" value="slow" onClick="setSpeed(1)">
-        <input type="button" id="normal" value="normal" onClick="setSpeed(2)">
-        <input type="button" id="fast" value="fast" onClick="setSpeed(3)">
-        <input type="button" id="instant" value="instant" onClick="setSpeed(4)">
+        <div class="radio-container">
+            <input type="radio" id="size1" name="size" onClick="newVis(5)">
+            <label for="size1">tiny<br></label>
+            <input type="radio" id="size2" name="size" onClick="newVis(10)">
+            <label for="size2">small<br></label>
+            <input type="radio" id="size3" name="size" onClick="newVis(50)" checked>
+            <label for="size3">medium<br></label>
+            <input type="radio" id="size4" name="size" onClick="newVis(100)">
+            <label for="size4">large<br></label>
+            <input type="radio" id="size5" name="size" onClick="newVis(200)">
+            <label for="size5">supermassive<br></label>
+        </div>
+        <div class="radio-container">
+            <input type="radio" name="speed" id="crawl" value="crawl" onClick="setSpeed(0)">
+            <label for="crawl">crawl<br></label>
+            <input type="radio" name="speed" id="slow" value="slow" onClick="setSpeed(1)">
+            <label for="slow">slow<br></label>
+            <input type="radio" name="speed" id="normal" value="normal" onClick="setSpeed(2)">
+            <label for="normal">moderate<br></label>
+            <input type="radio" name="speed" id="fast" value="fast" onClick="setSpeed(3)" checked>
+            <label for="fast">fast<br></label>
+            <input type="radio" name="speed" id="instant" value="instant" onClick="setSpeed(4)">
+            <label for="instant">instant<br></label>
+        </div>
+        <div class="radio-container">
+            <input type="checkbox" id="auto" value="auto" onClick="auto()">
+            <label for="auto">auto<br></label>
+            <input type="checkbox" id="compare" onClick="comparisons()">
+            <label for="compare">compare<br></label>
+            <input type="button" id="start" value="start" onClick="start()">
+            <input type="button" id="halt" value="stop" onClick="halt()"><br>
+            <input type="button" id="dijkstra" value="dijkstra/bfs" onClick="dijkstra()">
+            <input type="button" id="astar" value="a*" onClick="aStar()"><br>
+        </div>
+        <div class="radio-container">
+            <input type="button" id="clear" value="clear" onclick="clearVis()">
+            <input type="button" id="reset" value="reset" onClick="resetVis()"><br>
+            <input type="button" id="place" value="start/end nodes" onClick="set()"><br>
+            <input type="button" id="generate" value="randomize" onClick="generate()">
+        </div>
     </div>
     <script type="text/javascript" src="visualizer.js"></script>                <!-- Include visualizer -->
 </body>

@@ -1,14 +1,17 @@
 :root {
-    --unvisited: #CCCCCC;                           /* Store status colors as variables       */
-    --visited2: #00AA22;                            /* so they can be easily manipulated      */
-    --visited1: #00CCFF;
+    --unvisited: #BFBFBF;                           /* Store status colors as variables       */
+    --visited1: #00AA22;                            /* so they can be easily manipulated      */
+    --visited2: #00CCFF;
     --obstacle: #222222;
     --start: #2F2FFF;
     --end: red;
-    --path1: #CC00FF;
-    --path2: #FFFF00;
+    --path2: #CC00FF;
+    --path1: #FFFF00;
     --unsolvable: orange;
-    --nodeSize: 20px;
+    --nodeSize: 2%;
+    --nodeFontSize: 20pt;
+    --containerSize: 500px;
+    --buttonSize: 10pt;
 }
 
 body {
@@ -18,8 +21,8 @@ body {
 }
 
 .map-container {
-    width: 1000px;
-    height: 1000px;
+    width: var(--containerSize);
+    height: var(--containerSize);
     padding: 15px;
     border-radius: 15px;
     background-color: #DDDDDD;
@@ -30,21 +33,29 @@ body {
 .vis-node {
     width: var(--nodeSize);                                   /* Set width/height to 10px for 100x100  */
     height: var(--nodeSize);                                  /* 20px for 50x50, 100px for 10x10       */
-    outline: solid 3px #DDDDDD;                  /* 200px for 5x5                         */
+    outline: solid 1px #DDDDDD;                             /* 200px for 5x5                         */
     background-color: var(--unvisited);
     display: inline-block;
     position: top;
     margin: auto;
     color: black;
     font: helvetica;
-    font-size: 20pt;
+    font-size: var(--nodeFontSize);
 }
 
 .controls {
-    width: 1000px;
+    width: var(--containerSize);
     margin: 10px auto;
+    font-size: var(--buttonSize);
 }
 
 input {
-    font-size: 100pt;
+    margin: 2px;
+    font-size: var(--buttonSize);
+}
+
+.radio-container {
+    display: inline-block;
+    padding: 0 2.3%;
+    border-radius: 5px;
 }

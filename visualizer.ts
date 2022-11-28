@@ -5,8 +5,8 @@ let visSize:number = rowSize * rowSize;                     // Map size = rowSiz
 let visitAnimationSpeed:number = 1;
 let pathAnimationSpeed:number = 20;
 let autoResetSpeed:number = 1000;
-let heuristicWeight:number = 2;                             // Set the weight for A*'s heuristic component
-let heuristicIsExponent:boolean = false;
+let heuristicWeight:number = 1;                             // Set the weight for A*'s heuristic component
+let heuristicIsExponent:boolean = true;
 let showNodeNumber:boolean = false;
 
 // Visualizer Components and Properties: /////////////////////////////////////////////////////////////////////////
@@ -24,7 +24,6 @@ enum nodeState {                                            // Create an enum to
 }
 
 enum visMode {
-    Auto,
     Dijkstra,
     AStar,
 }
@@ -84,6 +83,9 @@ class Visualizer {
     public endNode:number = -1;
     private mode:visMode = visMode.Dijkstra;                // Run mode (Dijkstra's, Auto, etc)
     private isRunning:boolean = false;                      // Run switch
+    private isDrawing:boolean = false;
+    public autoOn:boolean = false;
+    public comparisonOn:boolean = false;
     private halted:boolean = false;
     private inputMode:nodeState = nodeState.Obstacle;       // When a user clicks, what are they trying to place?
     public result:any;
@@ -92,6 +94,10 @@ class Visualizer {
     private totalPathDiff:number = 0;
     private totalVisitDiff:number = 0;
     private updateCount:number = 0;
+    private dDraw = new Array<number>();
+    private dUndraw = new Array<number>();
+    private aDraw = new Array<number>();
+    private aUndraw = new Array<number>();
 
     constructor() {
         document.body.appendChild(this.div);
@@ -169,10 +175,9 @@ class Visualizer {
     public clear() {
         for (const node of this.map) {
             let state = node.getState();
-            if (state == nodeState.Path1 || 
-                state == nodeState.Path2 || 
-                state == nodeState.Visited1 || 
-                state == nodeState.Visited2)
+            if (state !== nodeState.Start &&
+                state !== nodeState.End &&
+                state !== nodeState.Obstacle)
                 node.setState(nodeState.Unvisited);
         }
     }
@@ -180,7 +185,7 @@ class Visualizer {
         this.inputMode = newInputMode;
     }
     public toggle(targetNode:number) {                      // Toggle nodes from user input
-        if (this.isRunning) {}                              // Don't toggle nodes while an algorithm is running
+        if (this.isRunning) return;                         // Don't toggle nodes while an algorithm is running
         else if (this.inputMode === nodeState.Obstacle) 
             this.setNode(targetNode, nodeState.Obstacle);
         else if (this.inputMode === nodeState.Start) {
@@ -200,137 +205,61 @@ class Visualizer {
         this.halted = true;
     }
     public auto() {
-        if (!this.isRunning && !this.halted) {
+        if (this.halted) return;
+        if (!this.isRunning && !this.isDrawing) {
             this.isRunning = true;
             visualizer.reset();                             // Create a fresh maze
             visualizer.generateTest();
             setTimeout(() => {visualizer.run();},0);        // Crashes without the timeout for some reason
-            this.auto();
         }
-        if (this.isRunning) {
+        else 
             setTimeout(() => { this.auto(); }, 500);
-        }
     }
 
-    public draw2(target:number) {
-        let dVisit = this.result.getDijkstraVisit();                        // Get our paths
-        let dPath = this.result.getDijkstraPath();
-        let aVisit = this.result.getAStarVisit();
-        let aPath = this.result.getAStarPath();
-        let dVisitThreshold = dVisit.length;                                // Relate our target to the correct arrays
-        let dPathThreshold = dPath.length + dVisitThreshold;
-        let aVisitThreshold = aVisit.length + dPathThreshold;
-        let end = aPath.length + aVisitThreshold;
-        let current = this.current;                                         // Create an iterator based on where we are
-        let timing = 1;                                                     // Make sure our animations occur in time
-        if (current < target) {
-            while (current < target) {
-                let timeout = timing;
-                let state:nodeState = 0;
-                let node:number = current;
-                (current < dVisitThreshold) ?                               // ternary fun! select our animation speed &
-                    (timeout*=visitAnimationSpeed, node=dVisit[node], state=nodeState.Visited1) :   // target node/state
-                (current < dPathThreshold) ?                                // based on the thresholds current has crossed
-                    (timeout*=pathAnimationSpeed, node=dPath[node-dVisitThreshold], state=nodeState.Path1) :
-                (current < aVisitThreshold) ? 
-                    (timeout*=visitAnimationSpeed, node=aVisit[node-dPathThreshold], state=nodeState.Visited2) :
-                    (timeout*=pathAnimationSpeed, node=aPath[node-aVisitThreshold], state=nodeState.Path2);
-                setTimeout(() => {
-                    if (current > 0 && current < end)                       // dont draw over our start/end nodes
-                        this.map[node].setState(state);
-                }, timeout);
-                timing++;
-                current++;
-            }
+    public draw() {
+        this.isDrawing = true;
+        let runID = this.updateCount;
+        let timing = 0;
+        for (let i = 0; i < this.dDraw.length; i += 2) {
+            if ((this.mode === visMode.AStar && !this.autoOn) || this.halted) break;
+            let node = this.dDraw[i];
+            let state = this.dDraw[i+1];
+            timing += (state === nodeState.Path1) ? pathAnimationSpeed :
+                                                    visitAnimationSpeed;
+            setTimeout(()=>{
+                if (!this.halted && runID === this.updateCount)
+                    this.map[node].setState(state);
+            }, timing);
         }
-        else {
-            while (current > target) {
-                let timeout = timing;
-                let state:nodeState = 0;
-                (current < dVisitThreshold) ? (timeout*=visitAnimationSpeed, state=nodeState.Unvisited) :
-                    (current < dPathThreshold) ? (timeout*=pathAnimationSpeed, state=nodeState.Visited1) :
-                    (current < aVisitThreshold) ? (timeout*=visitAnimationSpeed, state=nodeState.Visited1) :
-                    (timeout*=pathAnimationSpeed, state=nodeState.Visited2);
-                setTimeout(() => {
-                    if (current > 0 && current < end)
-                        this.map[current].setState(state);
-                }, timeout);
-                if (timing == aVisitThreshold) {
-                    for (let i = 0; i < dPath.length; i++)
-                        this.map[i].setState(nodeState.Path1);
-                }
-                timing++;
-                current--;
-            }
+        if (this.autoOn) {
+            timing += autoResetSpeed;
+            setTimeout(()=>{
+                if (!this.comparisonOn && !this.halted && runID === this.updateCount)
+                    this.clear();
+            }, timing);
         }
-        this.current = current;                                             // Update the visualizer's current step
-    }
-    private draw(result:PathFind) {
-        let dVisited = result.getDijkstraVisit();
-        let dPath = result.getDijkstraPath();
-        let aVisited = result.getAStarVisit();
-        let aPath = result.getAStarPath();
-        let timing:number = 0;
-        if (this.mode == visMode.Dijkstra || this.mode == visMode.Auto) {
-            for (const node of dVisited) {
-                setTimeout(() => {
-                    if (node !== this.startNode && node !== this.endNode)
-                        this.map[node].setState(nodeState.Visited1);
-                }, timing);
-            timing += visitAnimationSpeed;
-            }
-            if (dPath.length < 1) {
-                setTimeout(() => {
-                    for (const node of dVisited) {
-                        if (node !== this.startNode && node !== this.endNode)
-                            this.map[node].setState(nodeState.Unsolvable);
-                    }
-                }, timing);
-            }
-            else {
-                for (const node of dPath) {
-                    setTimeout(() => {
-                        if (node !== this.startNode && node !== this.endNode)
-                            this.map[node].setState(nodeState.Path1);
-                    }, timing);
-                    timing += pathAnimationSpeed;
-                }
-            }
+        for (let i = 0; i < this.aDraw.length; i += 2) {
+            if ((this.mode === visMode.Dijkstra && !this.autoOn) || this.halted) break;
+            let node = this.aDraw[i];
+            let state = this.aDraw[i+1];
+            timing += (state === nodeState.Path2) ? pathAnimationSpeed :
+                                                    visitAnimationSpeed;
+            setTimeout(()=>{
+                if (!this.halted && runID === this.updateCount
+                    && !(this.comparisonOn && this.map[node].getState() == nodeState.Path1 
+                    && state == nodeState.Visited2))
+                    this.map[node].setState(state);
+            }, timing);
         }
-        if (this.mode == visMode.AStar || this.mode == visMode.Auto) {
-            for (const node of aVisited) {
-                setTimeout(() => {
-                    if (node !== this.startNode && node !== this.endNode && this.map[node].getState() !== nodeState.Path1)
-                        this.map[node].setState(nodeState.Visited2);
-                }, timing);
-                timing += visitAnimationSpeed;
-            }
-            if (aPath.length < 1) {
-                setTimeout(() => {
-                    for (const node of aVisited) {
-                        if (node !== this.startNode && node !== this.endNode)
-                            this.map[node].setState(nodeState.Unsolvable);
-                    }
-                }, timing);
-            }
-            else {
-                for (const node of aPath) {
-                    setTimeout(() => {
-                        if (node !== this.startNode && node !== this.endNode)
-                            this.map[node].setState(nodeState.Path2);
-                    }, timing);
-                    timing += pathAnimationSpeed;
-                }
-            }
-        }
-        setTimeout(() => { this.isRunning = false; }, timing + autoResetSpeed);
+        setTimeout(()=>{
+            if (runID === this.updateCount)
+                this.isDrawing = false;
+        }, timing+autoResetSpeed);
     }
     public run() {
         console.clear();
         this.isRunning = true;
-        if (this.halted) {
-            this.halted = false;
-        }
+        if (this.halted) this.halted = false;
         let run = new PathFind;
         this.result = run;
         run.update(this.map, this.startNode, this.endNode);
@@ -344,14 +273,68 @@ class Visualizer {
             console.log("difference: " + pathDiff + " " + visitDiff);
             console.log("average: " + avgPath + " " + avgVisit);
         this.render();
+        if (this.autoOn)
+            this.auto();
     }
     private render() {
         console.log("rendering result");
-        if (this.result.isDone()) {
-            this.draw(this.result);
-        }
-        else 
+        if (!this.result.isDone()) {
             this.renderTimeout(0);
+            return;
+        }
+        let draw = new Array<number>();
+        let undraw = new Array<number>();
+        for (const node of this.result.dijkstraVisit) {                 // Render Visited tiles
+            draw.push(node);
+            draw.push(nodeState.Visited1);
+            undraw.push(node);
+            undraw.push(nodeState.Unvisited);
+        }
+        if (!this.result.dijkstraPath.length) {                        // Render Unsolveable tiles
+            for (const node of this.result.dijkstraVisit) {
+                draw.push(node);
+                draw.push(nodeState.Unsolvable);
+                undraw.push(node);
+                undraw.push(nodeState.Visited1);
+            }
+        }
+        else {
+            for (const node of this.result.dijkstraPath) {              // Render Path tiles
+                draw.push(node);
+                draw.push(nodeState.Path1);
+                undraw.push(node);
+                undraw.push(nodeState.Visited1);
+            }
+        }
+        this.dDraw = draw;
+        this.dUndraw = undraw;
+        draw = new Array<number>();                                     // Do it again for A*
+        undraw = new Array<number>();
+        for (const node of this.result.aStarVisit) {
+            draw.push(node);
+            draw.push(nodeState.Visited2);
+            undraw.push(node);
+            undraw.push(nodeState.Unvisited);
+        }
+        if (!this.result.aStarPath.length) {
+            for (const node of this.result.aStarVisit) {
+                draw.push(node);
+                draw.push(nodeState.Unsolvable);
+                undraw.push(node);
+                undraw.push(nodeState.Visited2);
+            }
+        }
+        else {
+            for (const node of this.result.aStarPath) {
+                draw.push(node);
+                draw.push(nodeState.Path2);
+                undraw.push(node);
+                undraw.push(nodeState.Visited2)
+            }
+        }
+        this.aDraw = draw;
+        this.isRunning = false;
+        if (this.autoOn) this.draw();
     }
     private renderTimeout(count) {
         if (this.result.isDone()) this.render();
@@ -437,8 +420,10 @@ class PathFind {
                 this.drawDijkstraPath(this.end);
                 break;
             }
-            this.updateUnvisitedNeighbors(closestNode, true);
+            this.updateUnvisitedNeighbors(closestNode, false);
         }
+        this.dijkstraVisit.shift();                                 // remove
+        this.dijkstraVisit.pop();
     }
     public aStar() {
         const visitedNodesInOrder = [];
@@ -447,13 +432,12 @@ class PathFind {
             this.sortNodesByCost(unvisitedNodes);
             const closestNode = unvisitedNodes.shift();
             if (closestNode.isObstacle) continue;
-            if (closestNode.distance === Infinity) {
+            if (closestNode.cost === Infinity) {
                 this.done = true;
                 break;
             }
             closestNode.isVisited = true;
             visitedNodesInOrder.push(closestNode);
-            //console.log("visited " + closestNode.id);
             this.aStarVisit.push(closestNode.id);
             if (closestNode === this.end) {
                 this.drawAStarPath(this.end);
@@ -461,6 +445,8 @@ class PathFind {
             }
             this.updateUnvisitedNeighbors(closestNode, true);
         }
+        this.aStarVisit.shift();
+        this.aStarVisit.pop();
     }
 
     private sortNodesByDistance(unvisitedNodes) {
@@ -473,12 +459,9 @@ class PathFind {
         const unvisitedNeighbors = this.getNeighbors(node);
         for (const neighbor of unvisitedNeighbors) {
             neighbor.distance = node.distance+1;
-            let distance = node.distance + 1;
-            neighbor.cost = distance;
             if (useHeuristics) {
                 let estimatedDistance = this.estimateDistance(neighbor.id);
-                neighbor.cost += (heuristicIsExponent) ? Math.pow(estimatedDistance, heuristicWeight) :
-                                 estimatedDistance * heuristicWeight;
+                neighbor.cost = estimatedDistance * heuristicWeight + neighbor.distance;
             }
             neighbor.previous = node;
         }
@@ -498,6 +481,8 @@ class PathFind {
         }
         for (const node of nodesInShortestPathOrder)
             this.dijkstraPath.push(node.id);
+        this.dijkstraPath.shift();                              // remove the start and end nodes
+        this.dijkstraPath.pop();
         this.dijkstraDone = true;
         console.log("dijkstra: " + this.dijkstraPath.length + " " + this.dijkstraVisit.length);
     }
@@ -510,12 +495,14 @@ class PathFind {
         }
         for (const node of nodesInShortestPathOrder)
             this.aStarPath.push(node.id);
+        this.aStarPath.shift();                                 // remove the start and end nodes
+        this.aStarPath.pop();
         this.done = true;
         console.log("astar: " + this.aStarPath.length + " " + this.aStarVisit.length);
     }
     private estimateDistance(node) {
         let end = this.end.id;
-        let current = node.id;
+        let current = node;
         let distance = 0;
         while (current%rowSize < end%rowSize) {
             current++;
@@ -563,20 +550,31 @@ class PathFind {
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 function start() {
     visualizer.clear();
+    if (visualizer.autoOn)
+        generate();
     visualizer.run();
 }
 function halt() {
+    visualizer.autoOn = false;
     visualizer.stop();
 }
 function auto() {
-    visualizer.setMode(visMode.Auto);
-    visualizer.auto();
+    let autoCheckbox = document.querySelector('#auto');
+    visualizer.autoOn = (autoCheckbox as HTMLInputElement).checked;
+}
+function comparisons() {
+    let comparisonCheckbox = document.querySelector('#compare');
+    visualizer.comparisonOn = (comparisonCheckbox as HTMLInputElement).checked;
 }
 function dijkstra() {
     visualizer.setMode(visMode.Dijkstra);
+    visualizer.clear();
+    visualizer.draw();
 }
 function aStar() {
     visualizer.setMode(visMode.AStar);
+    visualizer.clear();
+    visualizer.draw();
 }
 function set() {
     visualizer.place(nodeState.Start);
@@ -606,17 +604,33 @@ function setSpeed(speed:number) {
 function newVis(newSize:number) {
     visualizer.div.parentElement.removeChild(visualizer.div);
 
-    
-    let nodeSize = (newSize == 5) ? '200px' :
-                   (newSize == 10) ? '100px' :
-                   (newSize == 50) ? '20px' :
-                   (newSize == 100) ? '10px':
-                   '2px';
+    let containerSize = '500px';
+    let nodeSize = '20%';
+    let buttonSize = '10pt';
+    if (newSize == 10) {
+        nodeSize = '10%';
+    }
+    else if (newSize == 50) {
+        nodeSize = '2%';
+    }
+    else if (newSize == 100) {
+        nodeSize = '1%'
+    }
+    else if (newSize == 200) {
+        nodeSize = '0.5%';
+        containerSize = '1000px';
+        buttonSize = '20pt';
+    }
+
     rowSize = newSize;
     visSize = rowSize*rowSize;
     let root = document.querySelector(':root');
     (root as HTMLElement).style.setProperty('--nodeSize', nodeSize);
+    (root as HTMLElement).style.setProperty('--containerSize', containerSize);
+    (root as HTMLElement).style.setProperty('--buttonSize', buttonSize);
     visualizer = new Visualizer;
+    auto();
+    comparisons();
 }
 
 // Runtime:                                ///////////////////////////////////////////////////////////////////////
