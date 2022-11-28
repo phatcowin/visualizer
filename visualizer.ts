@@ -407,6 +407,7 @@ class PathFind {
         while (!!unvisitedNodes.length) {
             this.sortNodesByDistance(unvisitedNodes);
             const closestNode = unvisitedNodes.shift();
+            console.log("bfs analyzing " + closestNode.id);
             if (closestNode.isObstacle) continue;
             if (closestNode.distance === Infinity) {
                 this.dijkstraDone = true;
@@ -431,6 +432,7 @@ class PathFind {
         while (!!unvisitedNodes.length) {
             this.sortNodesByCost(unvisitedNodes);
             const closestNode = unvisitedNodes.shift();
+            console.log("a* analyzing " + closestNode.id);
             if (closestNode.isObstacle) continue;
             if (closestNode.cost === Infinity) {
                 this.done = true;

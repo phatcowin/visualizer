@@ -439,6 +439,7 @@ var PathFind = /** @class */ (function () {
         while (!!unvisitedNodes.length) {
             this.sortNodesByDistance(unvisitedNodes);
             var closestNode = unvisitedNodes.shift();
+            console.log("bfs analyzing " + closestNode.id);
             if (closestNode.isObstacle)
                 continue;
             if (closestNode.distance === Infinity) {
@@ -464,6 +465,7 @@ var PathFind = /** @class */ (function () {
         while (!!unvisitedNodes.length) {
             this.sortNodesByCost(unvisitedNodes);
             var closestNode = unvisitedNodes.shift();
+            console.log("a* analyzing " + closestNode.id);
             if (closestNode.isObstacle)
                 continue;
             if (closestNode.cost === Infinity) {
