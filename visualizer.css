@@ -1,6 +1,6 @@
-:root {
-    --unvisited: #BFBFBF;                           /* Store status colors as variables       */
-    --visited1: #00AA22;                            /* so they can be easily manipulated      */
+:root {                                               /* All our CSS variables go here            */
+    --unvisited: #BFBFBF;                           /* Store status colors as variables         */
+    --visited1: #00AA22;                            /* so they can be easily manipulated        */
     --visited2: #00CCFF;
     --obstacle: #222222;
     --start: #2F2FFF;
@@ -8,56 +8,54 @@
     --path2: #CC00FF;
     --path1: #FFFF00;
     --unsolvable: orange;
-    --nodeSize: 2%;
-    --nodeFontSize: 20pt;
+    --nodeSize: 2%;                                   /* Use css variables to manipulate the      */
+    --nodeFontSize: 20pt;                             /* size of elements on the DOM              */
     --containerSize: 500px;
     --buttonSize: 10pt;
 }
 
-body {
+body {                                                /* Let our body take up the whole viewport  */
     margin: 0;
     width: 100%;
     height: 100%;
-    font-family: courier;
+    font-family: courier;                             /* Use courier for the whole body           */
 }
 
-.map-container {
+.map-container {                                      /* Container for the visualizer             */
     width: var(--containerSize);
     height: var(--containerSize);
-    padding: 15px;
-    border-radius: 15px;
+    padding: 15px;                                    /* Give the visualizer pretty rounded       */
+    border-radius: 15px;                              /* corners                                  */
     background-color: #DDDDDD;
-    line-height: 0;
-    margin: 10px auto;
+    line-height: 0;                                   /* No space between rows of tiles           */
+    margin: 10px auto;                                /* Horizontally center this div             */
 }
 
-.vis-node {
-    width: var(--nodeSize);                                   /* Set width/height to 10px for 100x100  */
-    height: var(--nodeSize);                                  /* 20px for 50x50, 100px for 10x10       */
-    outline: solid 1px #DDDDDD;                             /* 200px for 5x5                         */
+.vis-node {                                           /* Properties for visualizer nodes/tiles    */
+    width: var(--nodeSize);
+    height: var(--nodeSize); 
+    outline: solid 1px #DDDDDD;                     /* Add a pixel of seperation between nodes  */
     background-color: var(--unvisited);
-    display: inline-block;
+    display: inline-block;                            /* Make the nodes appear in the right place */
     position: top;
     margin: auto;
-    color: black;
-    font: helvetica;
+    color: black;                                   /* Color for node numbers, if enabled       */
     font-size: var(--nodeFontSize);
 }
 
-.controls {
+.controls {                                           /* Container for all HTML input elements    */
     width: var(--containerSize);
     margin: 10px auto;
     font-size: var(--buttonSize);
 }
 
-input {
+input {                                               /* Settings for buttons                     */
     margin: 2px;
     font-size: var(--buttonSize);
-    font-family: courier;
+    font-family: courier;                             /* Does not inherit from body               */
 }
 
-.radio-container {
+.radio-container {                                    /* Container for a cluster of controls      */
     display: inline-block;
     padding: 0 5px;
-    border-radius: 5px;
 }
