@@ -9,7 +9,7 @@ let heuristicWeight:number = 1;                             // Tune A* heuristic
 let heuristicIsExponent:boolean = true;
 let showNodeNumber:boolean = false;                         // Show the nodeIDs on the visualizer
 
-// Visualizer Components and Properties: /////////////////////////////////////////////////////////////////////////
+// Visualizer and Visualizer Components: /////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 enum nodeState {                                            // Create an enum to reference our node states
     Unvisited,                                              // Each node state is associated with a color in CSS
