@@ -4,22 +4,25 @@
     <link rel="stylesheet" type="text/css" href="visualizer.css"></rel>         <!--    Include CSS     -->
 </head>
 <body>
-    <div class="controls">
+    <div class="controls">                                                      <!--     Controls       -->
         <div class="radio-container">
+            size:<br>
             <input type="radio" id="size1" name="size" onClick="newVis(5)">
-            <label for="size1">5x5<br></label>
+            <label for="size1">5x<br></label>
             <input type="radio" id="size2" name="size" onClick="newVis(10)">
-            <label for="size2">10x10<br></label>
+            <label for="size2">10x<br></label>
             <input type="radio" id="size3" name="size" onClick="newVis(50)" checked>
-            <label for="size3">50x50<br></label>
+            <label for="size3">50x<br></label>
             <input type="radio" id="size4" name="size" onClick="newVis(100)">
-            <label for="size4">100x100<br></label>
+            <label for="size4">100x<br></label>
             <input type="radio" id="size5" name="size" onClick="newVis(200)">
-            <label for="size5">200x200<br></label>
+            <label for="size5">200x<br></label>
             <input type="radio" id="size6" name="size" onClick="newVis(500)">
-            <label for="size6">500x500<br></label>
+            <label for="size6">500x<br></label>
         </div>
         <div class="radio-container">
+            animation<br>
+            speed:<br>
             <input type="radio" name="speed" id="crawl" value="crawl" onClick="setSpeed(0)">
             <label for="crawl">crawl<br></label>
             <input type="radio" name="speed" id="slow" value="slow" onClick="setSpeed(1)">
@@ -32,14 +35,23 @@
             <label for="instant">instant<br></label>
         </div>
         <div class="radio-container">
+            a* heuristic strength:<br>
+            <input type="radio" id="weight1" name="heuristic" onClick="heuristicStrength(1)">
+            <label for="weight1">x</label>
+            <input type="radio" id="weight2" name="heuristic" onClick="heuristicStrength(2)" checked>
+            <label for="weight2">2x</label>
+            <input type="radio" id="weight3" name="heuristic" onClick="heuristicStrength(3)">
+            <label for="weight3">4x</label>
+            <input type="radio" id="weight4" name="heuristic" onClick="heuristicStrength(4)">
+            <label for="weight4">x<sup>2</sup></label><br><br>
             <input type="checkbox" id="auto" value="auto" onClick="auto()">
-            <label for="auto">auto<br></label>
+            <label for="auto">auto</label>
             <input type="checkbox" id="compare" onClick="comparisons()">
-            <label for="compare">compare<br></label>
-            <input type="button" id="start" value="start" onClick="start()">
+            <label for="compare">compare</label><br><br>
+            <input type="button" id="start" value="run" onClick="start()">
             <input type="button" id="halt" value="stop" onClick="halt()"><br>
-            <input type="button" id="dijkstra" value="dijkstra/bfs" onClick="dijkstra()">
-            <input type="button" id="astar" value="a*" onClick="aStar()"><br>
+            <input type="button" id="dijkstra" value="draw bfs" onClick="dijkstra()">
+            <input type="button" id="astar" value="draw a*" onClick="aStar()"><br>
         </div>
         <div class="radio-container">
             <input type="button" id="clear" value="clear" onclick="clearVis()">
