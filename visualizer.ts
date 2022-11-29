@@ -222,7 +222,8 @@ class Visualizer {
             let node = this.dDraw[i];                       // Our target node is stored in the first slot
             let state = this.dDraw[i+1];                    // Our target state is stored in the second
             timing += (state === nodeState.Path1) ? pathAnimationSpeed :    // Iterate our timing based on our target state
-                                                    visitAnimationSpeed;    // and animation speed setting
+                      (state === nodeState.Visited1) ? visitAnimationSpeed :    // and animation speed setting
+                      0;                                    // If it's 
             setTimeout(()=>{                                    // Check if we're halted, and because we're on a timout,
                 if (!this.halted && runID === this.updateCount  //   check if we've started a new drawing process
                     && !(this.comparisonOn                          // Check if we're in comparison mode, and if so, check
@@ -246,7 +247,8 @@ class Visualizer {
             let node = this.aDraw[i];
             let state = this.aDraw[i+1];
             timing += (state === nodeState.Path2) ? pathAnimationSpeed :
-                                                    visitAnimationSpeed;
+                      (state === nodeState.Visited2) ? visitAnimationSpeed :
+                      0;
             setTimeout(()=>{
                 if (!this.halted && runID === this.updateCount
                     && !(this.comparisonOn 
