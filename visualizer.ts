@@ -170,8 +170,13 @@ class Visualizer {
 
     }
     public reset() {                                        // Create a fresh board for auto mode
-        for (const node of this.map)
+        for (const node of this.map)                        // Make every node Unvisited
             node.setState(nodeState.Unvisited);
+    }
+    public resetAvg() {                                     // Clear the variables for average calculation
+        this.totalPathDiff = 0;
+        this.totalVisitDiff = 0;
+        this.updateCount = 0;
     }
     public clear() {                                        // Clear all pathfinding states from the map
         for (const node of this.map) {
@@ -554,6 +559,7 @@ function generate() {                                       // Generate a random
 }
 function resetVis() {                                       // Reinitialize the visualizer
     newVis(rowSize);
+    visualizer.resetAvg();                                  // Reset the rolling average
 }
 function clearVis() {                                       // Clear visited tiles and paths from the visualizer
     visualizer.clear();

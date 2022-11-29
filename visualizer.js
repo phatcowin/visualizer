@@ -170,6 +170,11 @@ var Visualizer = /** @class */ (function () {
             node.setState(nodeState.Unvisited);
         }
     };
+    Visualizer.prototype.resetAvg = function () {
+        this.totalPathDiff = 0;
+        this.totalVisitDiff = 0;
+        this.updateCount = 0;
+    };
     Visualizer.prototype.clear = function () {
         for (var _i = 0, _a = this.map; _i < _a.length; _i++) {
             var node = _a[_i];
@@ -583,6 +588,7 @@ function generate() {
 }
 function resetVis() {
     newVis(rowSize);
+    visualizer.resetAvg(); // Reset the rolling average
 }
 function clearVis() {
     visualizer.clear();
