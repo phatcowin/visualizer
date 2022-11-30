@@ -28,7 +28,7 @@ enum visMode {                                              // Select which path
     AStar,
 }
 
-class visNode {
+class visNode {                                             // Nodes for the visualizer
     private state:nodeState = nodeState.Unvisited;          // Each node has a state
     private div = document.createElement('div');            // Create a tile for each node
     private nodeID:number = null;                           // Create a unique ID to target node during click events
@@ -74,12 +74,12 @@ class visNode {
     public getNodeNumber() { return this.nodeID; }          // Get our node ID
 }
 
-class Visualizer {
+class Visualizer {                                          // The visualizer
     public map = new Array<visNode>();                      // Create our map
     public div = document.createElement('div');             // Create a container for our visualizer
     public startNode:number = -1;                           // Keep track of our start and end nodes
     public endNode:number = -1;
-    public mode:visMode = visMode.Dijkstra;                // Run mode (Dijkstra's, Auto, etc)
+    public mode:visMode = visMode.Dijkstra;                 // Run mode (Dijkstra's, Auto, etc)
     private isRunning:boolean = false;                      // True while the visualizer is pathfinding/rendering
     private isDrawing:boolean = false;                      // True while the visualizer is drawing
     public autoOn:boolean = false;                          // True while auto mode is enabled (controlled with checkbox)
